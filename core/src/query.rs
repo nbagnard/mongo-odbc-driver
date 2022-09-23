@@ -41,10 +41,10 @@ impl MongoStatement for MongoQuery {
     }
 
     fn get_col_count(&self) -> usize {
-        todo!()
+        self.resultset_metadata.len()
     }
 
-    fn get_col_attribute(&self, _col_index: usize) -> Result<&MongoColMetadata> {
-        todo!()
+    fn get_col_attribute(&self, col_index: usize) -> Result<&MongoColMetadata> {
+        Ok(&self.resultset_metadata.get(col_index).unwrap())
     }
 }
