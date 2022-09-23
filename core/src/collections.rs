@@ -4,6 +4,7 @@ use crate::stmt::MongoStatement;
 use bson::Bson;
 use mongodb::results::CollectionSpecification;
 use mongodb::sync::Cursor;
+use constants::MongoColMetadata;
 
 #[derive(Debug)]
 struct CollectionsForDb {
@@ -50,5 +51,13 @@ impl MongoStatement for MongoCollections {
         // 2 -> current_coll.name
         // 3 -> current_coll.CollectionType
         unimplemented!()
+    }
+
+    fn get_col_count(&self) -> usize {
+        todo!()
+    }
+
+    fn get_col_attribute(&self, _col_index: usize) -> Result<&MongoColMetadata> {
+        todo!()
     }
 }

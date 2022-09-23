@@ -1,7 +1,8 @@
 use crate::conn::MongoConnection;
 use crate::err::Result;
-use crate::stmt::MongoStatement;
+use crate::stmt::{MongoStatement};
 use bson::Bson;
+use constants::{MongoColMetadata, SQL_TABLES_METADATA};
 
 #[derive(Debug)]
 pub struct MongoDatabases {
@@ -59,5 +60,13 @@ impl MongoStatement for MongoDatabases {
             // and the SQL_ATTR_USE_BOOKMARKS statement attribute was set to SQL_UB_OFF
             // Throw error 07009
         }
+    }
+
+    fn get_col_count(&self) -> usize {
+        SQL_TABLES_METADATA.len()
+    }
+
+    fn get_col_attribute(&self, col_index: usize) -> Result<&MongoColMetadata> {
+        Ok(&SQL_TABLES_METADATA[col_index])
     }
 }

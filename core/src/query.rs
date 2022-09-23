@@ -1,8 +1,9 @@
 use crate::conn::MongoConnection;
 use crate::err::Result;
-use crate::stmt::MongoStatement;
+use crate::stmt::{MongoStatement};
 use bson::{Bson, Document};
 use mongodb::sync::Cursor;
+use constants::MongoColMetadata;
 
 #[derive(Debug)]
 pub struct MongoQuery {
@@ -24,16 +25,6 @@ impl MongoQuery {
     ) -> Result<Self> {
         unimplemented!()
     }
-
-    // Return the number of fields/columns in the resultset
-    fn _get_col_count(&self) -> u32 {
-        unimplemented!()
-    }
-
-    // Get the metadata for the column with the given index.
-    fn _get_col_metadata(&self, _col_index: u16) -> Result<MongoColMetadata> {
-        unimplemented!()
-    }
 }
 
 impl MongoStatement for MongoQuery {
@@ -48,30 +39,12 @@ impl MongoStatement for MongoQuery {
     fn get_value(&self, _col_index: u16) -> Result<Option<Bson>> {
         unimplemented!()
     }
-}
 
-// Metadata information for a column of the result set.
-// The information is to be used when reporting columns information from
-// SQLColAtrribute or SQLDescibeCol and when converting the data to the targeted C type.
-#[derive(Debug)]
-pub struct MongoColMetadata {
-    pub base_col_name: String,
-    pub base_table_name: String,
-    pub catalog_name: String,
-    pub col_count: u16,
-    pub display_size: u64,
-    pub fixed_prec_scale: bool,
-    pub label: String,
-    pub length: u128,
-    pub col_name: String,
-    pub is_nullable: bool,
-    pub octet_length: u128,
-    pub precision: u16,
-    pub scale: u16,
-    pub is_searchable: bool,
-    pub table_name: String,
-    // BSON type name
-    pub type_name: String,
-    pub is_unsigned: bool,
-    pub is_updatable: bool,
+    fn get_col_count(&self) -> usize {
+        todo!()
+    }
+
+    fn get_col_attribute(&self, _col_index: usize) -> Result<&MongoColMetadata> {
+        todo!()
+    }
 }

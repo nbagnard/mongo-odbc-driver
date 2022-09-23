@@ -230,20 +230,89 @@ pub extern "C" fn SQLColAttribute(
     _string_length_ptr: *mut SmallInt,
     _numeric_attribute_ptr: *mut Len,
 ) -> SqlReturn {
+    // Get the
     unsupported_function(MongoHandleRef::from(statement_handle), "SQLColAttribute")
 }
 
 #[no_mangle]
 pub extern "C" fn SQLColAttributeW(
-    _statement_handle: HStmt,
-    _column_number: USmallInt,
-    _field_identifier: Desc,
+    statement_handle: HStmt,
+    column_number: USmallInt,
+    field_identifier: Desc,
     _character_attribute_ptr: Pointer,
     _buffer_length: SmallInt,
     _string_length_ptr: *mut SmallInt,
     _numeric_attribute_ptr: *mut Len,
 ) -> SqlReturn {
-    unimplemented!()
+    let mongo_handle = MongoHandleRef::from(statement_handle);
+    let stmt = must_be_valid!((*mongo_handle).as_statement());
+    let col_index = column_number as usize;
+    let mongo_statement = (*(stmt.read().unwrap())).mongo_statement.unwrap();
+    let metadata = mongo_statement.get_col_attribute(col_index).unwrap();
+    match field_identifier {
+        Desc::Count => {
+            // Copy value from
+            // mongo_statement.get_col_count()
+            // to _numeric_attribute_ptr
+            }
+        Desc::Type => {
+            // Copy value from
+            // metadata.type_name
+            // to _character_attribute_ptr, set _string_length_ptr etc..
+        }
+        Desc::Length => {}
+        Desc::OctetLengthPtr => {}
+        Desc::Precision => {}
+        Desc::Scale => {}
+        Desc::DatetimeIntervalCode => {}
+        Desc::Nullable => {}
+        Desc::IndicatorPtr => {}
+        Desc::DataPtr => {}
+        Desc::Name => {}
+        Desc::Unnamed => {}
+        Desc::OctetLength => {}
+        Desc::AllocType => {}
+        Desc::CharacterSetCatalog => {}
+        Desc::CharacterSetSchema => {}
+        Desc::CharacterSetName => {}
+        Desc::CollationCatalog => {}
+        Desc::CollationSchema => {}
+        Desc::CollationName => {}
+        Desc::UserDefinedTypeCatalog => {}
+        Desc::UserDefinedTypeSchema => {}
+        Desc::UserDefinedTypeName => {}
+        Desc::ArraySize => {}
+        Desc::ArrayStatusPtr => {}
+        Desc::AutoUniqueValue => {}
+        Desc::BaseColumnName => {}
+        Desc::BaseTableName => {}
+        Desc::BindOffsetPtr => {}
+        Desc::BindType => {}
+        Desc::CaseSensitive => {}
+        Desc::CatalogName => {}
+        Desc::ConciseType => {}
+        Desc::DatetimeIntervalPrecision => {}
+        Desc::DisplaySize => {}
+        Desc::FixedPrecScale => {}
+        Desc::Label => {}
+        Desc::LiteralPrefix => {}
+        Desc::LiteralSuffix => {}
+        Desc::LocalTypeName => {}
+        Desc::MaximumScale => {}
+        Desc::MinimumScale => {}
+        Desc::NumPrecRadix => {}
+        Desc::ParameterType => {}
+        Desc::RowsProcessedPtr => {}
+        Desc::RowVer => {}
+        Desc::SchemaName => {}
+        Desc::Searchable => {}
+        Desc::TypeName => {}
+        Desc::TableName => {}
+        Desc::Unsigned => {}
+        Desc::Updatable => {}
+        Desc::MimeType => {}
+    }
+    SqlReturn::SUCCESS
 }
 
 #[no_mangle]

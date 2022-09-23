@@ -3,6 +3,7 @@ use crate::err::Result;
 use crate::stmt::MongoStatement;
 use bson::{Bson, Document};
 use mongodb::sync::Cursor;
+use constants::MongoColMetadata;
 
 #[derive(Debug)]
 struct FieldsForCollection {
@@ -48,5 +49,13 @@ impl MongoStatement for MongoFields {
     // Fails if the first row as not been retrieved (next must be called at least once before getValue).
     fn get_value(&self, _col_index: u16) -> Result<Option<Bson>> {
         unimplemented!()
+    }
+
+    fn get_col_count(&self) -> usize {
+        todo!()
+    }
+
+    fn get_col_attribute(&self, _col_index: usize) -> Result<&MongoColMetadata> {
+        todo!()
     }
 }
