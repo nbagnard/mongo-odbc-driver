@@ -47,18 +47,18 @@ mod integration {
         unsafe {
 
 
-            let mut odbcVersion = 0;
-            println!("odbcVersion = {}", odbcVersion);
-            let p_odbcVersion = &mut odbcVersion as *mut i32 as *mut c_void;
+            let mut odbc_version = 0;
+            println!("odbcVersion = {}", odbc_version);
+            let p_odbc_version = &mut odbc_version as *mut i32 as *mut c_void;
             let sql_return_SQLGetEnvAttr = SQLGetEnvAttr(
                 env_handle,
                 EnvironmentAttribute::OdbcVersion,
-                p_odbcVersion,
+                p_odbc_version,
                 0,
                 &mut 0);
 
             dbg!(sql_return_SQLGetEnvAttr);
-            println!("odbcVersion = {}", odbcVersion);
+            println!("odbcVersion = {}", odbc_version);
 
             let mut dbc: Handle = null_mut();
 
