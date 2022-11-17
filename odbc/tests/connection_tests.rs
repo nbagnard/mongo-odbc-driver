@@ -49,14 +49,16 @@ macro_rules! test_connection_diagnostics {
                 assert_eq!(expected_sql_return, actual_return_val);
             };
 
-            verify_sql_diagnostics(
-                HandleType::Dbc,
-                conn_handl as *mut _,
-                1,
-                expected_sql_state,
-                expected_error_message,
-                0,
-            );
+            if expected_sql_return != SqlReturn::SUCCESS {
+                verify_sql_diagnostics(
+                    HandleType::Dbc,
+                    conn_handl as *mut _,
+                    1,
+                    expected_sql_state,
+                    expected_error_message,
+                    0,
+                );
+            }
         }
     };
 }

@@ -1,4 +1,6 @@
 use std::env;
+use std::ptr::null_mut;
+use odbc_sys::{Handle, HandleType, WChar, SQLGetDiagRecW, SQLAllocHandle, SqlReturn, SQLSetEnvAttr, HEnv, EnvironmentAttribute, AttrOdbcVersion, AttrConnectionPooling};
 
 /// Generate the default connection setting defined for the tests using a connection string
 /// of the form 'Driver={};PWD={};USER={};SERVER={};AUTH_SRC={}'.
@@ -32,4 +34,132 @@ pub fn generate_default_connection_str() -> String {
     };
 
     connection_string
+}
+
+// Verifies that the expected SQL State, message text, and native error in the handle match
+// the expected input
+pub fn verify_sql_diagnostics(
+    handle_type: HandleType,
+    handle: Handle,
+    record_number: i16,
+    expected_sql_state: &str,
+    expected_message_text: &str,
+    mut expected_native_err: i32,
+) {
+    let text_length_ptr = &mut 0;
+    let actual_sql_state = &mut [0u16; 6] as *mut _;
+    let actual_message_text = &mut [0u16; 512] as *mut _;
+    let actual_native_error = &mut 0;
+    unsafe {
+        let _ = SQLGetDiagRecW(
+            handle_type,
+            handle as *mut _,
+            record_number,
+            actual_sql_state,
+            actual_native_error,
+            actual_message_text,
+            1024,
+            text_length_ptr,
+        );
+
+        printText("error message", *text_length_ptr as usize, actual_message_text);
+    };
+    let mut expected_sql_state_encoded: Vec<u16> = expected_sql_state.encode_utf16().collect();
+    expected_sql_state_encoded.push(0);
+    let actual_message_length = *text_length_ptr as usize;
+    unsafe {
+        assert_eq!(
+            expected_message_text,
+            &(String::from_utf16_lossy(&*(actual_message_text as *const [u16; 256])))
+                [0..actual_message_length],
+        );
+        assert_eq!(
+            String::from_utf16(&*(expected_sql_state_encoded.as_ptr() as *const [u16; 6])).unwrap(),
+            String::from_utf16(&*(actual_sql_state as *const [u16; 6])).unwrap()
+        );
+    }
+    assert_eq!(&mut expected_native_err as &mut i32, actual_native_error);
+}
+
+// Verifies that the expected SQL State, message text, and native error in the handle match
+// the expected input
+pub fn print_sql_diagnostics(
+    handle_type: HandleType,
+    handle: Handle,
+) {
+    let text_length_ptr = &mut 0;
+    let actual_sql_state = &mut [0u16; 6] as *mut _;
+    let actual_message_text = &mut [0u16; 512] as *mut _;
+    let actual_native_error = &mut 0;
+    unsafe {
+        let _ = SQLGetDiagRecW(
+            handle_type,
+            handle as *mut _,
+            1,
+            actual_sql_state,
+            actual_native_error,
+            actual_message_text,
+            1024,
+            text_length_ptr,
+        );
+    };
+    dbg!(*actual_native_error);
+    printText("error message", *text_length_ptr as usize, actual_message_text);
+}
+
+
+pub fn printText(label: &str, txt_len: usize, text: *mut WChar)
+{
+    unsafe {
+        //println!("text_length = {}", *text_length_ptr);
+
+        //let txt_len = *text_length_ptr as usize;
+        let error_message = &(String::from_utf16_lossy( & * (text as * const [u16; 256])))[0..txt_len];
+        println!("{} = {}",label, error_message);
+    }
+}
+
+
+/// Setup flow.
+/// This will allocate a new environment handle and set ODBC_VERSION and CONNECTION_POOLING environment attributes.
+pub fn setup() -> odbc_sys::HEnv {
+    /*
+        Setup flow :
+            SQLAllocHandle(SQL_HANDLE_ENV)
+            SQLSetEnvAttr(SQL_ATTR_ODBC_VERSION, SQL_OV_ODBC3)
+            SQLSetEnvAttr(SQL_ATTR_CONNECTION_POOLING, SQL_CP_ONE_PER_HENV)
+    */
+
+    let mut env: Handle = null_mut();
+
+    unsafe {
+        let allocEnvHandle = SQLAllocHandle(HandleType::Env, null_mut(), &mut env as *mut Handle);
+        dbg!(allocEnvHandle);
+        assert_eq!(
+            SqlReturn::SUCCESS,
+            allocEnvHandle
+        );
+
+        assert_eq!(
+            SqlReturn::SUCCESS,
+            SQLSetEnvAttr(
+                env as HEnv,
+                EnvironmentAttribute::OdbcVersion,
+                AttrOdbcVersion::Odbc3.into(),
+                0,
+            )
+        );
+
+        assert_eq!(
+            SqlReturn::SUCCESS,
+            SQLSetEnvAttr(
+                env as HEnv,
+                EnvironmentAttribute::ConnectionPooling,
+                AttrConnectionPooling::OnePerHenv.into(),
+                0,
+            )
+        );
+    }
+
+    env as HEnv
 }

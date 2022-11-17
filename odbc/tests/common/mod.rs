@@ -1,5 +1,7 @@
+//use odbc_sys::*;
+
+use odbc_sys::{Handle, HandleType, WChar};
 use mongoodbc::SQLGetDiagRecW;
-use odbc_sys::{Handle, HandleType};
 
 // Verifies that the expected SQL State, message text, and native error in the handle match
 // the expected input
@@ -26,6 +28,8 @@ pub fn verify_sql_diagnostics(
             1024,
             text_length_ptr,
         );
+
+        printText("error message", *text_length_ptr as usize, actual_message_text);
     };
     let mut expected_sql_state_encoded: Vec<u16> = expected_sql_state.encode_utf16().collect();
     expected_sql_state_encoded.push(0);
@@ -42,4 +46,42 @@ pub fn verify_sql_diagnostics(
         );
     }
     assert_eq!(&mut expected_native_err as &mut i32, actual_native_error);
+}
+
+// Verifies that the expected SQL State, message text, and native error in the handle match
+// the expected input
+pub fn print_sql_diagnostics(
+    handle_type: HandleType,
+    handle: Handle,
+) {
+    let text_length_ptr = &mut 0;
+    let actual_sql_state = &mut [0u16; 6] as *mut _;
+    let actual_message_text = &mut [0u16; 512] as *mut _;
+    let actual_native_error = &mut 0;
+    unsafe {
+        let _ = SQLGetDiagRecW(
+            handle_type,
+            handle as *mut _,
+            1,
+            actual_sql_state,
+            actual_native_error,
+            actual_message_text,
+            1024,
+            text_length_ptr,
+        );
+    };
+    dbg!(*actual_native_error);
+    printText("error message", *text_length_ptr as usize, actual_message_text);
+}
+
+
+pub fn printText(label: &str, txt_len: usize, text: *mut WChar)
+{
+    unsafe {
+        //println!("text_length = {}", *text_length_ptr);
+
+        //let txt_len = *text_length_ptr as usize;
+        let error_message = &(String::from_utf16_lossy( & * (text as * const [u16; 256])))[0..txt_len];
+        println!("{} = {}",label, error_message);
+    }
 }

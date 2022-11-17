@@ -10,6 +10,7 @@ use crate::{
         util::connection_attribute_to_string,
     },
     handles::definitions::*,
+
 };
 use bson::Bson;
 use constants::{SQL_ALL_CATALOGS, SQL_ALL_SCHEMAS, SQL_ALL_TABLE_TYPES};
@@ -30,6 +31,8 @@ use std::{
     panic,
     sync::{mpsc, RwLock},
 };
+
+use crate::file_dbg;
 
 const NULL_HANDLE_ERROR: &str = "handle cannot be null";
 const HANDLE_MUST_BE_ENV_ERROR: &str = "handle must be env";
@@ -924,6 +927,7 @@ pub unsafe extern "C" fn SQLDriverConnectW(
     panic_safe_exec!(
         || {
             let conn_handle = MongoHandleRef::from(connection_handle);
+             file_dbg!(string_length_1);
             // SQL_NO_PROMPT is the only option supported for DriverCompletion
             if driver_completion != DriverConnectOption::NoPrompt {
                 conn_handle.add_diag_info(ODBCError::UnsupportedDriverConnectOption(format!(
