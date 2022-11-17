@@ -132,5 +132,4 @@ mod integration {
             printText("error", *text_length_ptr as usize, actual_message_text);
         }
     }
-
 }

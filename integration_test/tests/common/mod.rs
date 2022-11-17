@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use std::env;
 use std::ptr::null_mut;
 use odbc_sys::{Handle, HandleType, WChar, SQLGetDiagRecW, SQLAllocHandle, SqlReturn, SQLSetEnvAttr, HEnv, EnvironmentAttribute, AttrOdbcVersion, AttrConnectionPooling};
@@ -62,7 +63,7 @@ pub fn verify_sql_diagnostics(
             text_length_ptr,
         );
 
-        printText("error message", *text_length_ptr as usize, actual_message_text);
+        print_text("error message", *text_length_ptr as usize, actual_message_text);
     };
     let mut expected_sql_state_encoded: Vec<u16> = expected_sql_state.encode_utf16().collect();
     expected_sql_state_encoded.push(0);
@@ -104,11 +105,11 @@ pub fn print_sql_diagnostics(
         );
     };
     dbg!(*actual_native_error);
-    printText("error message", *text_length_ptr as usize, actual_message_text);
+    print_text("error message", *text_length_ptr as usize, actual_message_text);
 }
 
 
-pub fn printText(label: &str, txt_len: usize, text: *mut WChar)
+pub fn print_text(label: &str, txt_len: usize, text: *mut WChar)
 {
     unsafe {
         //println!("text_length = {}", *text_length_ptr);
@@ -133,11 +134,11 @@ pub fn setup() -> odbc_sys::HEnv {
     let mut env: Handle = null_mut();
 
     unsafe {
-        let allocEnvHandle = SQLAllocHandle(HandleType::Env, null_mut(), &mut env as *mut Handle);
-        dbg!(allocEnvHandle);
+        let alloc_env_handle = SQLAllocHandle(HandleType::Env, null_mut(), &mut env as *mut Handle);
+        dbg!(&alloc_env_handle);
         assert_eq!(
             SqlReturn::SUCCESS,
-            allocEnvHandle
+            alloc_env_handle
         );
 
         assert_eq!(

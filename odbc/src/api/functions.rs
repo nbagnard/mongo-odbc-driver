@@ -439,6 +439,8 @@ pub unsafe extern "C" fn SQLColAttributeW(
                     SqlReturn::SUCCESS
                 }
                 Desc::Unnamed | Desc::Updatable => {
+                    let updatable_val = SQL_ATTR_READONLY;
+
                     *numeric_attribute_ptr = 0 as Len;
                     SqlReturn::SUCCESS
                 }
