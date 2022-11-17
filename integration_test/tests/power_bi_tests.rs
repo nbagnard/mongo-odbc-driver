@@ -6,7 +6,7 @@ mod integration {
     use odbc::ffi::SQL_NTS;
     use odbc_sys::{Handle, HandleType, HEnv, SqlReturn, SQLFreeHandle, EnvironmentAttribute, SQLAllocHandle, SQLSetConnectAttrW, HDbc, ConnectionAttribute, DriverConnectOption, SmallInt, SQLDriverConnectW, SQLGetDiagRecW, SQLGetEnvAttr};
     use crate::common;
-    use crate::common::{print_outcome, print_text, setup};
+    use crate::common::{print_outcome, print_sql_diagnostics, print_text, setup};
 
     /// Test PowerBI Setup flow
     #[test]
@@ -100,19 +100,27 @@ mod integration {
             SWORD *             0x0000000000000000
             UWORD                        0 <SQL_DRIVER_NOPROMPT>
              */
+            let driver_connect_outcome = SQLDriverConnectW(dbc as HDbc,
+                                            null_mut(),
+                                            in_connection_string_encoded.as_ptr(),
+                                            BUFFER_LENGTH,
+                                            out_connection_string,
+                                            BUFFER_LENGTH,
+                                            string_length_2,
+                                            driver_completion);
+
             print_outcome( "SQLDriverConnectW",
-                           SQLDriverConnectW(dbc as HDbc,
-                                             null_mut(),
-                                             in_connection_string_encoded.as_ptr(),
-                                             BUFFER_LENGTH,
-                                             out_connection_string,
-                                             BUFFER_LENGTH,
-                                             string_length_2,
-                                             driver_completion));
+                           driver_connect_outcome);
 
             dbg!(*string_length_2);
             print_text("out_connection_string", *string_length_2 as usize, out_connection_string);
 
+            if (driver_connect_outcome == SqlReturn::ERROR)
+            {
+                print_sql_diagnostics(HandleType::Dbc, dbc);
+            }
+
+            /*
             let text_length_ptr = &mut 0;
             let actual_sql_state = &mut [0u16; 6] as *mut _;
             let actual_message_text = &mut [0u16; 512] as *mut _;
@@ -130,6 +138,7 @@ mod integration {
             );
 
             print_text("error", *text_length_ptr as usize, actual_message_text);
+             */
         }
     }
 }
