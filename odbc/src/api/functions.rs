@@ -7,7 +7,7 @@ use crate::{
         definitions::*,
         errors::{ODBCError, Result},
         odbc_uri::ODBCUri,
-        util::connection_attribute_to_string,format_version
+        util::{connection_attribute_to_string, format_version},
     },
     handles::definitions::*,
 
