@@ -6,7 +6,7 @@ mod integration {
     use odbc::ffi::SQL_NTS;
     use odbc_sys::{Handle, HandleType, HEnv, SqlReturn, SQLFreeHandle, EnvironmentAttribute, SQLAllocHandle, SQLSetConnectAttrW, HDbc, ConnectionAttribute, DriverConnectOption, SmallInt, SQLDriverConnectW, SQLGetDiagRecW, SQLGetEnvAttr};
     use crate::common;
-    use crate::common::{print_text, setup};
+    use crate::common::{print_outcome, print_text, setup};
 
     /// Test PowerBI Setup flow
     #[test]
@@ -50,14 +50,14 @@ mod integration {
             let mut odbc_version = 0;
             println!("odbcVersion = {}", odbc_version);
             let p_odbc_version = &mut odbc_version as *mut i32 as *mut c_void;
-            let sql_return_SQLGetEnvAttr = SQLGetEnvAttr(
+            print_outcome("SQLGetEnvAttr",
+                          SQLGetEnvAttr(
                 env_handle,
                 EnvironmentAttribute::OdbcVersion,
                 p_odbc_version,
                 0,
-                &mut 0);
+                &mut 0));
 
-            dbg!(sql_return_SQLGetEnvAttr);
             println!("odbcVersion = {}", odbc_version);
 
             let mut dbc: Handle = null_mut();
@@ -86,8 +86,8 @@ mod integration {
 
             let driver_completion = DriverConnectOption::NoPrompt;
             let string_length_2 = &mut 0;
-            const buffer_length: SmallInt = 300;
-            let out_connection_string = &mut [0u16; (buffer_length as usize - 1)] as *mut _;
+            const BUFFER_LENGTH: SmallInt = 300;
+            let out_connection_string = &mut [0u16; (BUFFER_LENGTH as usize - 1)] as *mut _;
 
             /*
             odbct32w        1c74-18a8   ENTER SQLDriverConnectW
@@ -100,16 +100,16 @@ mod integration {
             SWORD *             0x0000000000000000
             UWORD                        0 <SQL_DRIVER_NOPROMPT>
              */
-            let _outcome = SQLDriverConnectW(dbc as HDbc,
+            print_outcome( "SQLDriverConnectW",
+                           SQLDriverConnectW(dbc as HDbc,
                                              null_mut(),
                                              in_connection_string_encoded.as_ptr(),
-                                             SQL_NTS,
+                                             BUFFER_LENGTH,
                                              out_connection_string,
-                                             300,
+                                             BUFFER_LENGTH,
                                              string_length_2,
-                                             driver_completion);
+                                             driver_completion));
 
-            dbg!(_outcome);
             dbg!(*string_length_2);
             print_text("out_connection_string", *string_length_2 as usize, out_connection_string);
 

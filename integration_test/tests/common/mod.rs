@@ -108,6 +108,28 @@ pub fn print_sql_diagnostics(
     print_text("error message", *text_length_ptr as usize, actual_message_text);
 }
 
+// Verifies that the expected SQL State, message text, and native error in the handle match
+// the expected input
+pub fn print_outcome(
+    function_name: &str,
+    sql_return: SqlReturn,
+) {
+
+    let outcome = match sql_return {
+        SqlReturn::SUCCESS => {"SUCCESS"},
+        SqlReturn::ERROR => {"ERROR"},
+        SqlReturn::SUCCESS_WITH_INFO => {"SUCCESS_WITH_INFO"},
+        SqlReturn::INVALID_HANDLE => {"INVALID_HANDLE"},
+        SqlReturn::NEED_DATA  => {"NEED_DATA"},
+        SqlReturn::NO_DATA  => {"NO_DATA"},
+        SqlReturn::PARAM_DATA_AVAILABLE => {"PARAM_DATA_AVAILABLE"},
+        SqlReturn::STILL_EXECUTING => {"STILL_EXECUTING"},
+        _ => {"unknown sql_return"},
+
+    };
+    println!("{} SQLReturn = {}", function_name, outcome);
+}
+
 
 pub fn print_text(label: &str, txt_len: usize, text: *mut WChar)
 {
