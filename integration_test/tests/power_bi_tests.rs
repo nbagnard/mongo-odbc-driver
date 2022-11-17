@@ -111,7 +111,7 @@ mod integration {
 
             dbg!(_outcome);
             dbg!(*string_length_2);
-            printText("out_connection_string", *string_length_2 as usize, out_connection_string);
+            print_text("out_connection_string", *string_length_2 as usize, out_connection_string);
 
             let text_length_ptr = &mut 0;
             let actual_sql_state = &mut [0u16; 6] as *mut _;
@@ -129,7 +129,7 @@ mod integration {
                 text_length_ptr,
             );
 
-            printText("error", *text_length_ptr as usize, actual_message_text);
+            print_text("error", *text_length_ptr as usize, actual_message_text);
         }
     }
 }
