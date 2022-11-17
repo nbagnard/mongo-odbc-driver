@@ -6,7 +6,7 @@ mod integration {
     use odbc::ffi::SQL_NTS;
     use odbc_sys::{Handle, HandleType, HEnv, SqlReturn, SQLFreeHandle, EnvironmentAttribute, SQLAllocHandle, SQLSetConnectAttrW, HDbc, ConnectionAttribute, DriverConnectOption, SmallInt, SQLDriverConnectW, SQLGetDiagRecW, SQLGetEnvAttr};
     use crate::common;
-    use crate::common::{printText, setup};
+    use crate::common::{print_text, setup};
 
     /// Test PowerBI Setup flow
     #[test]
