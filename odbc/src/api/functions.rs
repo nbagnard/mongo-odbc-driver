@@ -105,7 +105,6 @@ macro_rules! panic_safe_exec {
         match result {
             Ok(sql_return) => return sql_return,
             Err(err) => {
-                file_dbg!(err);
                 let msg = if let Some(msg) = err.downcast_ref::<&'static str>() {
                     format!("{}\n{:?}", msg, r.recv())
                 } else {
