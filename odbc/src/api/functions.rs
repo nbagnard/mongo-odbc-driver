@@ -947,7 +947,10 @@ pub unsafe extern "C" fn SQLDriverConnectW(
             file_dbg!(format!("odbc_uri_string = {}", odbc_uri_string));
             let mongo_connection =
                 odbc_unwrap!(sql_driver_connect(conn, &odbc_uri_string), conn_handle);
+            file_dbg!(">>>> sql_driver_connect");
             conn.write().unwrap().mongo_connection = Some(mongo_connection);
+            file_dbg!("<<<< sql_driver_connect");
+
             let buffer_len = usize::try_from(buffer_length).unwrap();
             file_dbg!(format!("buffer_len = {}", buffer_len));
             let sql_return = i16_len::set_output_wstring(
