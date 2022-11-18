@@ -1,4 +1,6 @@
 use std::env;
+use std::ptr::null_mut;
+use odbc_sys::{AttrConnectionPooling, AttrOdbcVersion, EnvironmentAttribute, Handle, HandleType, HEnv, SQLAllocHandle, SqlReturn, SQLSetEnvAttr, WChar};
 
 /// Generate the default connection setting defined for the tests using a connection string
 /// of the form 'Driver={};PWD={};USER={};SERVER={};AUTH_SRC={}'.
@@ -33,3 +35,58 @@ pub fn generate_default_connection_str() -> String {
 
     connection_string
 }
+
+/// Prints the content of a given char buffer.
+pub fn printText(label: &str, txt_len: usize, text: *mut WChar)
+{
+    unsafe {
+        let txt = &(String::from_utf16_lossy( & * (text as * const [u16; 256])))[0..txt_len];
+        println!("{} = {}",label, txt);
+    }
+}
+
+
+/// Setup flow.
+/// This will allocate a new environment handle and set ODBC_VERSION and CONNECTION_POOLING environment attributes.
+pub fn setup() -> odbc_sys::HEnv {
+    /*
+        Setup flow :
+            SQLAllocHandle(SQL_HANDLE_ENV)
+            SQLSetEnvAttr(SQL_ATTR_ODBC_VERSION, SQL_OV_ODBC3)
+            SQLSetEnvAttr(SQL_ATTR_CONNECTION_POOLING, SQL_CP_ONE_PER_HENV)
+    */
+
+    let mut env: Handle = null_mut();
+
+    unsafe {
+        let allocEnvHandle = SQLAllocHandle(HandleType::Env, null_mut(), &mut env as *mut Handle);
+        dbg!(allocEnvHandle);
+        assert_eq!(
+            SqlReturn::SUCCESS,
+            allocEnvHandle
+        );
+
+        assert_eq!(
+            SqlReturn::SUCCESS,
+            SQLSetEnvAttr(
+                env as HEnv,
+                EnvironmentAttribute::OdbcVersion,
+                AttrOdbcVersion::Odbc3.into(),
+                0,
+            )
+        );
+
+        assert_eq!(
+            SqlReturn::SUCCESS,
+            SQLSetEnvAttr(
+                env as HEnv,
+                EnvironmentAttribute::ConnectionPooling,
+                AttrConnectionPooling::OnePerHenv.into(),
+                0,
+            )
+        );
+    }
+
+    env as HEnv
+}
+
