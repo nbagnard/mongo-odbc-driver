@@ -1836,6 +1836,7 @@ unsafe fn sql_get_infow_helper(
     buffer_length: SmallInt,
     string_length_ptr: *mut SmallInt,
 ) -> SqlReturn {
+    file_dbg!(">>>>> sql_get_infow_helper");
     match info_type {
         // SQL_DRIVER_NAME
         InfoType::DriverName => {

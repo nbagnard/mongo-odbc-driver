@@ -100,6 +100,7 @@ mod integration {
             SWORD *             0x0000000000000000
             UWORD                        0 <SQL_DRIVER_NOPROMPT>
              */
+            dbg!(">>>> pbi test - SQLDriverConnectW");
             let driver_connect_outcome = SQLDriverConnectW(dbc as HDbc,
                                             null_mut(),
                                             in_connection_string_encoded.as_ptr(),
@@ -108,6 +109,7 @@ mod integration {
                                             BUFFER_LENGTH,
                                             string_length_2,
                                             driver_completion);
+            dbg!("<<<< pbi test - SQLDriverConnectW");
 
             print_outcome( "SQLDriverConnectW",
                            driver_connect_outcome);
