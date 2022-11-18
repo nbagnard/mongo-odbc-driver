@@ -928,7 +928,7 @@ pub unsafe extern "C" fn SQLDriverConnectW(
     panic_safe_exec!(
         || {
             file_dbg!(">>>> SQLDriverConnectW");
-            file_dbg!(format!("in_connection_string = {}", in_connection_string));
+            file_dbg!(format!("string_length_1 = {}", string_length_1));
             file_dbg!(format!("buffer_length = {}", buffer_length));
             file_dbg!(format!("driver_completion = {}", driver_completion as i32));
             let conn_handle = MongoHandleRef::from(connection_handle);
@@ -954,8 +954,8 @@ pub unsafe extern "C" fn SQLDriverConnectW(
                 buffer_len,
                 string_length_2,
             );
-            file_dbg!(format!("out_connection_string = {}", out_connection_string));
-            file_dbg!(format!("string_length_2 = {}", string_length_2));
+            file_dbg!(format!("string_length_2 = {}", *string_length_2));
+            file_dbg!(format!("out_connection_string = {}", input_wtext_to_string(out_connection_string, string_length_2 as usize)));
             if sql_return == SqlReturn::SUCCESS_WITH_INFO {
                 conn_handle.add_diag_info(ODBCError::OutStringTruncated(buffer_len));
             }
