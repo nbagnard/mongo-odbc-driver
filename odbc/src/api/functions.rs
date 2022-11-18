@@ -2331,7 +2331,9 @@ unsafe fn sql_get_infow_helper(
         InfoType::MaxIdentifierLen => {
             file_dbg!("SQL_MAX_IDENTIFIER_LEN");
             // MongoSQL does not have a maximum identifier length.
-            i16_len::set_output_fixed_data(&SQL_U16_ZERO, info_value_ptr, string_length_ptr)
+            let outcome = i16_len::set_output_fixed_data(&SQL_U16_ZERO, info_value_ptr, string_length_ptr );
+            file_dbg!(*(info_value_ptr as *mut u16));
+            return outcome
         }
         _ => SqlReturn::SUCCESS,
     }
