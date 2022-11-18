@@ -16,7 +16,7 @@ lazy_static! {
 #[cfg(all(target_os = "macos", debug_assertions))]
 lazy_static! {
     pub(crate) static ref LOGGER_FILE: Mutex<File> =
-        match File::create("/Users/natacha.bagnard/mongo-odbc-driver-myfork/atlas_odbc_log") {
+        match File::create("~/mongo-odbc-driver-myfork/atlas_odbc_log") {
             Err(why) => panic!("couldn't open {}: {}", "adl_odbc_log", why),
             Ok(file) => Mutex::new(file),
         };
