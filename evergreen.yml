@@ -240,7 +240,7 @@ functions:
         working_dir: mongosql-odbc-driver
         script: |
           ${prepare_shell}
-          sed -i 's@%DRIVER_PATH%@'"$(echo "$(pwd))""'@' setup/odbcinst.ini
+          sed -i "" 's@%DRIVER_PATH%@'"$(echo $(pwd))"'@' setup/odbcinst.ini
           echo "----- odbcinst.ini after setup ----"
           echo "$(cat setup/odbcinst.ini)"
           echo "-------------------------"          
