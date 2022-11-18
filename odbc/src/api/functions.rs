@@ -958,7 +958,6 @@ pub unsafe extern "C" fn SQLDriverConnectW(
         },
         connection_handle
     );
-    file_dbg!("<<<< SQLDriverConnectW");
 }
 
 ///
@@ -1823,7 +1822,6 @@ pub unsafe extern "C" fn SQLGetInfoW(
 ) -> SqlReturn {
     panic_safe_exec!(
         ||
-        file_dbg!(">>>>> sql_get_infow_helper");
         sql_get_infow_helper(
             connection_handle,
             info_type,
@@ -1833,7 +1831,6 @@ pub unsafe extern "C" fn SQLGetInfoW(
         ),
         connection_handle
     );
-    file_dbg!("<<<<< sql_get_infow_helper");
 }
 
 unsafe fn sql_get_infow_helper(
@@ -1843,6 +1840,7 @@ unsafe fn sql_get_infow_helper(
     buffer_length: SmallInt,
     string_length_ptr: *mut SmallInt,
 ) -> SqlReturn {
+    file_dbg!(">>>>> sql_get_infow_helper");
     match info_type {
         // SQL_DRIVER_NAME
         InfoType::DriverName => {
