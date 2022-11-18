@@ -928,8 +928,10 @@ pub unsafe extern "C" fn SQLDriverConnectW(
     panic_safe_exec!(
         || {
             file_dbg!(">>>> SQLDriverConnectW");
+            file_dbg!(format!("in_connection_string = {}", in_connection_string));
+            file_dbg!(format!("buffer_length = {}", buffer_length));
+            file_dbg!(format!("driver_completion = {}", driver_completion as i32));
             let conn_handle = MongoHandleRef::from(connection_handle);
-             file_dbg!(format!("string_length_1 = {}", string_length_1));
             // SQL_NO_PROMPT is the only option supported for DriverCompletion
             if driver_completion != DriverConnectOption::NoPrompt {
                 conn_handle.add_diag_info(ODBCError::UnsupportedDriverConnectOption(format!(
@@ -941,6 +943,7 @@ pub unsafe extern "C" fn SQLDriverConnectW(
             let conn = must_be_valid!((*conn_handle).as_connection());
             let odbc_uri_string =
                 input_wtext_to_string(in_connection_string, string_length_1 as usize);
+            file_dbg!(format!("odbc_uri_string = {}", odbc_uri_string));
             let mongo_connection =
                 odbc_unwrap!(sql_driver_connect(conn, &odbc_uri_string), conn_handle);
             conn.write().unwrap().mongo_connection = Some(mongo_connection);
@@ -951,6 +954,8 @@ pub unsafe extern "C" fn SQLDriverConnectW(
                 buffer_len,
                 string_length_2,
             );
+            file_dbg!(format!("out_connection_string = {}", out_connection_string));
+            file_dbg!(format!("string_length_2 = {}", string_length_2));
             if sql_return == SqlReturn::SUCCESS_WITH_INFO {
                 conn_handle.add_diag_info(ODBCError::OutStringTruncated(buffer_len));
             }
