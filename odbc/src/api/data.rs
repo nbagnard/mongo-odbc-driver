@@ -996,7 +996,7 @@ pub mod i16_len {
         text_length_ptr: *mut SmallInt,
     ) -> SqlReturn {
         file_dbg!(">>>> set_output_wstring");
-
+        file_dbg!(message);
         let message = message.encode_utf16().collect::<Vec<u16>>();
         let (len, ret) = set_output_wstring_helper(&message, output_ptr, buffer_len);
         *text_length_ptr = len as SmallInt;
