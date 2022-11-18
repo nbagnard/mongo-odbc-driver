@@ -240,7 +240,6 @@ functions:
         working_dir: mongosql-odbc-driver
         script: |
           ${prepare_shell}
-          echo "$(ls -rt ./target/debug/)"
           sed -i 's@%DRIVER_PATH%@'"$(echo "$(pwd))""'@' setup/odbcinst.ini
           echo "----- odbcinst.ini after setup ----"
           echo "$(cat setup/odbcinst.ini)"
@@ -261,6 +260,7 @@ functions:
           cargo test --target x86_64-unknown-linux-gnu
           EXITCODE=$?
           ./resources/run_adf.sh stop
+          echo "$(ls -rt ./target/debug/)"
           exit $EXITCODE
 
   "run result set test":
