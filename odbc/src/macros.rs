@@ -22,6 +22,15 @@ lazy_static! {
         };
 }
 
+#[cfg(all(target_os = "linux", debug_assertions))]
+lazy_static! {
+    pub(crate) static ref LOGGER_FILE: Mutex<File> =
+        match File::create("~/logs/atlas_odbc_log") {
+            Err(why) => panic!("couldn't open {}: {}", "adl_odbc_log", why),
+            Ok(file) => Mutex::new(file),
+        };
+}
+
 #[macro_export]
 macro_rules! file_dbg {
     () => {
