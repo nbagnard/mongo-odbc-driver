@@ -4,6 +4,7 @@ use bson::doc;
 use mongodb::{options::ClientOptions, sync::Client};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+use file_dbg_macros::file_dbg;
 
 #[derive(Debug)]
 pub struct MongoConnection {
@@ -52,12 +53,17 @@ impl MongoConnection {
         client_options.app_name = application_name
             .map(String::from)
             .or_else(|| Some(MONGODB_ODBC_DRIVER.to_string()));
+        file_dbg!(">>>> Client::with_options");
+        //file_dbg!(client_options);
         let client = Client::with_options(client_options)?;
+        file_dbg!("<<<< Client::with_options");
         // run the "ping" command on the `auth_src` database. We assume this requires the
         // fewest permissions of anything we can do to verify a connection.
+        file_dbg!(">>>> ping");
         client
             .database(auth_src)
             .run_command(doc! {"ping": 1}, None)?;
+        file_dbg!("<<<< ping");
         Ok(MongoConnection {
             client,
             current_db: current_db.map(String::from),

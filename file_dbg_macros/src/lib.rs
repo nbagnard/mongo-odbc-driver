@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 
 #[cfg(all(target_os = "windows", debug_assertions))]
 lazy_static! {
-    pub(crate) static ref LOGGER_FILE: Mutex<File> =
+    pub static ref LOGGER_FILE: Mutex<File> =
         match File::create("C:\\cygwin\\home\\Administrator\\logs\\atlas_odbc_log") {
             Err(why) => panic!("couldn't open {}: {}", "atlas_odbc_log", why),
             Ok(file) => Mutex::new(file),
@@ -15,7 +15,7 @@ lazy_static! {
 
 #[cfg(all(target_os = "macos", debug_assertions))]
 lazy_static! {
-    pub(crate) static ref LOGGER_FILE: Mutex<File> =
+    pub static ref LOGGER_FILE: Mutex<File> =
         match File::create("~/mongo-odbc-driver-myfork/atlas_odbc_log") {
             Err(why) => panic!("couldn't open {}: {}", "adl_odbc_log", why),
             Ok(file) => Mutex::new(file),
@@ -24,7 +24,7 @@ lazy_static! {
 
 #[cfg(all(target_os = "linux", debug_assertions))]
 lazy_static! {
-    pub(crate) static ref LOGGER_FILE: Mutex<File> =
+    pub static ref LOGGER_FILE: Mutex<File> =
         match File::create("~/logs/atlas_odbc_log") {
             Err(why) => panic!("couldn't open {}: {}", "adl_odbc_log", why),
             Ok(file) => Mutex::new(file),
@@ -36,8 +36,8 @@ macro_rules! file_dbg {
     () => {
         #[cfg(debug_assertions)]
         {
-            use crate::macros::LOGGER_FILE;
             use std::io::Write;
+            use file_dbg_macros::LOGGER_FILE;
 
             let mut logger_file = LOGGER_FILE.lock();
             while logger_file.is_err() {
@@ -57,7 +57,7 @@ macro_rules! file_dbg {
     ( $val:expr ) => {
         #[cfg(debug_assertions)]
         {
-            use crate::macros::LOGGER_FILE;
+            use file_dbg_macros::LOGGER_FILE;
             use std::io::Write;
 
             let mut logger_file = LOGGER_FILE.lock();

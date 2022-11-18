@@ -32,7 +32,7 @@ use std::{
     sync::{mpsc, RwLock},
 };
 
-use crate::file_dbg;
+use file_dbg_macros::file_dbg;
 
 const NULL_HANDLE_ERROR: &str = "handle cannot be null";
 const HANDLE_MUST_BE_ENV_ERROR: &str = "handle must be env";

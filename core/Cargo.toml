@@ -16,6 +16,8 @@ serde = { version = "1", features = ["derive"] }
 itertools = "0.10.4"
 lazy_static = "1.4.0"
 likely_stable = "0.1.2"
+file_dbg_macros = { path = "../file_dbg_macros" }
+
 
 [dependencies.mongodb]
 version = "2.1"

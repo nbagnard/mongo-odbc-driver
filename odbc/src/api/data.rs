@@ -978,7 +978,7 @@ unsafe fn set_output_binary_helper(
 }
 
 pub mod i16_len {
-    use crate::file_dbg;
+    use file_dbg_macros::file_dbg;
     use super::*;
     ///
     /// set_output_wstring writes [`message`] to the *WChar [`output_ptr`]. [`buffer_len`] is the
