@@ -846,7 +846,7 @@ fn sql_driver_connect(
     let connection_timeout = conn_reader.attributes.connection_timeout;
     file_dbg!(format!("connection_timeout = {}", connection_timeout.unwrap_or_else(|| 0)));
     let login_timeout = conn_reader.attributes.login_timeout;
-    file_dbg!(format!("application_name = {}", login_timeout.unwrap_or_else(|| 0)));
+    file_dbg!(format!("login_timeout = {}", login_timeout.unwrap_or_else(|| 0)));
     let application_name = odbc_uri.remove(&["app_name", "application_name"]);
     file_dbg!(format!("application_name = {}", application_name.unwrap_or_else(|| "")));
     // ODBCError has an impl From mongo_odbc_core::Error, but that does not
@@ -2868,7 +2868,7 @@ pub unsafe extern "C" fn SQLSetConnectAttrW(
 
                 match attribute {
                     ConnectionAttribute::LoginTimeout => {
-                        conn_guard.attributes.login_timeout = Some(value_ptr as u32);
+                        conn_guard.attributes.login_timeout = Some(*value_ptr as u32);
                         SqlReturn::SUCCESS
                     }
                     _ => {
