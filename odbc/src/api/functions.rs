@@ -926,6 +926,7 @@ pub unsafe extern "C" fn SQLDriverConnectW(
 ) -> SqlReturn {
     panic_safe_exec!(
         || {
+            println!(">>>> SQLDriverConnectW");
             let conn_handle = MongoHandleRef::from(connection_handle);
              file_dbg!(string_length_1);
             // SQL_NO_PROMPT is the only option supported for DriverCompletion
