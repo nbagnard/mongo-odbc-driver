@@ -105,6 +105,7 @@ macro_rules! panic_safe_exec {
         match result {
             Ok(sql_return) => return sql_return,
             Err(err) => {
+                file_dbg!(err);
                 let msg = if let Some(msg) = err.downcast_ref::<&'static str>() {
                     format!("{}\n{:?}", msg, r.recv())
                 } else {
@@ -948,6 +949,7 @@ pub unsafe extern "C" fn SQLDriverConnectW(
                 odbc_unwrap!(sql_driver_connect(conn, &odbc_uri_string), conn_handle);
             conn.write().unwrap().mongo_connection = Some(mongo_connection);
             let buffer_len = usize::try_from(buffer_length).unwrap();
+            file_dbg!(format!("buffer_len = {}", buffer_len));
             let sql_return = i16_len::set_output_wstring(
                 &odbc_uri_string,
                 out_connection_string,
