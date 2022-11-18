@@ -948,8 +948,9 @@ pub unsafe extern "C" fn SQLDriverConnectW(
             file_dbg!(">>>> sql_driver_connect");
             let mongo_connection =
                 odbc_unwrap!(sql_driver_connect(conn, &odbc_uri_string), conn_handle);
-            conn.write().unwrap().mongo_connection = Some(mongo_connection);
             file_dbg!("<<<< sql_driver_connect");
+            conn.write().unwrap().mongo_connection = Some(mongo_connection);
+            file_dbg!("conn.write().unwrap().mongo_connection");
 
             let buffer_len = usize::try_from(buffer_length).unwrap();
             file_dbg!(format!("buffer_len = {}", buffer_len));
