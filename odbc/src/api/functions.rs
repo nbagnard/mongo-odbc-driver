@@ -832,7 +832,10 @@ fn sql_driver_connect(
     let conn_reader = conn_handle.read().unwrap();
     let mut odbc_uri = ODBCUri::new(odbc_uri_string)?;
     let mongo_uri = odbc_uri.remove_to_mongo_uri()?;
+    file_dbg!(format!("mongo_uri = {}", &mongo_uri));
     let auth_src = odbc_uri.remove_or_else(|| "admin", &["auth_src"]);
+    file_dbg!(format!("auth_src = {}", auth_src));
+
     odbc_uri
         .remove(&["driver", "dsn"])
         .ok_or(ODBCError::MissingDriverOrDSNProperty)?;
@@ -842,11 +845,15 @@ fn sql_driver_connect(
         odbc_uri.remove(&["database"])
     };
     let connection_timeout = conn_reader.attributes.connection_timeout;
+    file_dbg!(format!("connection_timeout = {}", connection_timeout.unwrap_or_else(|| 0)));
     let login_timeout = conn_reader.attributes.login_timeout;
+    file_dbg!(format!("application_name = {}", login_timeout.unwrap_or_else(|| 0)));
     let application_name = odbc_uri.remove(&["app_name", "application_name"]);
+    file_dbg!(format!("application_name = {}", application_name.unwrap_or_else(|| "")));
     // ODBCError has an impl From mongo_odbc_core::Error, but that does not
     // create an impl From Result<T, mongo_odbc_core::Error> to Result<T, ODBCError>
     // hence this bizarre Ok(func?) pattern.
+    file_dbg!(">>>> MongoConnection::connect");
     Ok(mongo_odbc_core::MongoConnection::connect(
         &mongo_uri,
         auth_src,
