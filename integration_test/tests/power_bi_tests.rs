@@ -111,7 +111,7 @@ mod integration {
                                             driver_completion);
             dbg!("<<<< pbi test - SQLDriverConnectW");
 
-            println!("SQLDriverConnectW == {}", driver_connect_outcome as u16);
+            println!(format!("SQLDriverConnectW == {}", driver_connect_outcome as u16));
 
             dbg!(*string_length_2);
             print_text("out_connection_string", *string_length_2 as usize, out_connection_string);
