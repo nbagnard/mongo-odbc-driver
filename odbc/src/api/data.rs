@@ -861,8 +861,8 @@ pub unsafe fn input_wtext_to_string(text: *const WChar, len: usize) -> String {
     file_dbg!(format!("Size of Wchat = {}", size_of::<WChar>()));
     file_dbg!(format!("dst.len = {}", dst.len()));
     let dest_ptr= dst.as_mut_ptr();
-    file_dbg!(format!("dest_ptr = {}", dest_ptr));
-    file_dbg!(format!("text_ptr = {}", text));
+    file_dbg!(format!("dest_ptr = {}", dest_ptr as u64));
+    file_dbg!(format!("text_ptr = {}", text as u64));
     copy_nonoverlapping(text, dst.as_mut_ptr(), len);
     let ret = String::from_utf16_lossy(&dst);
     file_dbg!(format!("ret = {}", ret));
