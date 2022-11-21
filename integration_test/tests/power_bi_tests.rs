@@ -6,7 +6,7 @@ mod integration {
     use odbc::ffi::SQL_NTS;
     use odbc_sys::{Handle, HandleType, HEnv, SqlReturn, SQLFreeHandle, EnvironmentAttribute, SQLAllocHandle, SQLSetConnectAttrW, HDbc, ConnectionAttribute, DriverConnectOption, SmallInt, SQLDriverConnectW, SQLGetDiagRecW, SQLGetEnvAttr};
     use crate::common;
-    use crate::common::{print_outcome, print_sql_diagnostics, print_text, setup};
+    use crate::common::{setup};
 
     /// Test PowerBI Setup flow
     #[test]
@@ -50,13 +50,14 @@ mod integration {
             let mut odbc_version = 0;
             println!("odbcVersion = {}", odbc_version);
             let p_odbc_version = &mut odbc_version as *mut i32 as *mut c_void;
-            print_outcome("SQLGetEnvAttr",
-                          SQLGetEnvAttr(
-                env_handle,
-                EnvironmentAttribute::OdbcVersion,
-                p_odbc_version,
-                0,
-                &mut 0));
+            assert_eq!(
+                SqlReturn::SUCCESS,
+                SQLGetEnvAttr(
+                    env_handle,
+                    EnvironmentAttribute::OdbcVersion,
+                    p_odbc_version,
+                    0,
+                    &mut 0));
 
             println!("odbcVersion = {}", odbc_version);
 
@@ -111,14 +112,12 @@ mod integration {
                                             driver_completion);
             dbg!("<<<< pbi test - SQLDriverConnectW");
 
-            println!(format!("SQLDriverConnectW == {}", driver_connect_outcome as u16));
-
             dbg!(*string_length_2);
-            print_text("out_connection_string", *string_length_2 as usize, out_connection_string);
+            println!("out_connection_string size = {}", *string_length_2 as usize);
 
             if (driver_connect_outcome == SqlReturn::ERROR)
             {
-                print_sql_diagnostics(HandleType::Dbc, dbc);
+                println!("SQLDriver connect failed");
             }
 
             /*
