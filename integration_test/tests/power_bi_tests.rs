@@ -117,7 +117,7 @@ mod integration {
             dbg!(*string_length_2);
             print_text("out_connection_string", *string_length_2 as usize, out_connection_string);
 
-            if (driver_connect_outcome == SqlReturn::ERROR)
+            if driver_connect_outcome == SqlReturn::ERROR
             {
                 print_sql_diagnostics(HandleType::Dbc, dbc);
             }
