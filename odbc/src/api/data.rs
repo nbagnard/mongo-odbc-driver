@@ -11,6 +11,7 @@ use mongo_odbc_core::util::Decimal128Plus;
 use odbc_sys::{CDataType, Date, Len, Pointer, Time, Timestamp, USmallInt};
 use odbc_sys::{Char, Integer, SmallInt, SqlReturn, WChar};
 use std::{cmp::min, collections::HashMap, mem::size_of, ptr::copy_nonoverlapping, str::FromStr};
+use file_dbg_macros::file_dbg;
 
 const BINARY: &str = "Binary";
 const DOUBLE: &str = "Double";
@@ -857,8 +858,24 @@ pub unsafe fn input_wtext_to_string(text: *const WChar, len: usize) -> String {
 
     let mut dst = Vec::with_capacity(len);
     dst.set_len(len);
+    file_dbg!("Size of Wchat = {}", size_of::<WChar>());
+    file_dbg!("dst.len = {}", dst.len());
+    let dest_ptr= dst.as_mut_ptr();
+    file_dbg!("dest_ptr = {}", dest_ptr);
+    file_dbg!("text_ptr = {}", text);
     copy_nonoverlapping(text, dst.as_mut_ptr(), len);
-    String::from_utf16_lossy(&dst)
+    let ret = String::from_utf16_lossy(&dst);
+    file_dbg!("ret = {}", ret);
+    file_dbg!("---- text ---- ");
+    let mut itr = text;
+    {
+        while *itr != 0 {
+            file_dbg!(*itr);
+            itr = itr.offset(1);
+        }
+    }
+    file_dbg!("---------- ");
+    return  ret;
 }
 
 ///
