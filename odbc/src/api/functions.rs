@@ -2869,7 +2869,9 @@ pub unsafe extern "C" fn SQLSetConnectAttrW(
 
                 match attribute {
                     ConnectionAttribute::LoginTimeout => {
-                        conn_guard.attributes.login_timeout = Some(*(value_ptr as *mut u32));
+                        conn_guard.attributes.login_timeout = value_ptr as *mut u32//Some(*(value_ptr as *mut u32));
+                        file_dbg!(format!("login_timeout = {}", conn_guard.attributes.login_timeout));
+
                         SqlReturn::SUCCESS
                     }
                     _ => {

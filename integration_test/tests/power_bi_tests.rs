@@ -66,14 +66,14 @@ mod integration {
                 SQLAllocHandle(HandleType::Dbc, env_handle as *mut _, &mut dbc as *mut Handle));
 
             let mut login_timeout = 0;
-            //let p_login_timeout = &mut login_timeout as *mut i32 as *mut c_void;
+            let p_login_timeout = &mut login_timeout as *mut i32 as *mut c_void;
 
             assert_eq!(
                 SqlReturn::SUCCESS,
                 SQLSetConnectAttrW(
                     dbc as HDbc,
                     ConnectionAttribute::LoginTimeout,
-                    login_timeout.into(),
+                    p_login_timeout,
                     0,
                 ));
 
