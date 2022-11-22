@@ -265,7 +265,7 @@ mod unit {
                     expected,
                     crate::api::data::input_wtext_to_string(
                         char_buffer as *const _,
-                        *out_length as usize
+                        *out_length as isize
                     )
                 );
                 let _ = Box::from_raw(char_buffer);

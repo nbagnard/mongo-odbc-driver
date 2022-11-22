@@ -842,7 +842,7 @@ pub unsafe fn input_text_to_string(text: *const Char, len: usize) -> String {
 /// This converts raw C-pointers to rust Strings, which requires unsafe operations
 ///
 #[allow(clippy::uninit_vec)]
-pub unsafe fn input_wtext_to_string(text: *const WChar, len: usize) -> String {
+pub unsafe fn input_wtext_to_string(text: *const WChar, len: isize) -> String {
     if (len as isize) < 0 {
         let mut dst = Vec::new();
         let mut itr = text;
@@ -855,9 +855,10 @@ pub unsafe fn input_wtext_to_string(text: *const WChar, len: usize) -> String {
         return String::from_utf16_lossy(&dst);
     }
 
-    let mut dst = Vec::with_capacity(len);
-    dst.set_len(len);
-    copy_nonoverlapping(text, dst.as_mut_ptr(), len);
+    let ulen:usize = len.try_into().unwrap();
+    let mut dst = Vec::with_capacity(ulen);
+    dst.set_len(ulen);
+    copy_nonoverlapping(text, dst.as_mut_ptr(), ulen);
     String::from_utf16_lossy(&dst)
 }
 

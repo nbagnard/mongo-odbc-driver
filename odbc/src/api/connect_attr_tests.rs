@@ -61,7 +61,7 @@ mod unit {
         };
     }
 
-        unsafe fn modify_string_attr(value_ptr: Pointer, out_length: usize) -> String {
+        unsafe fn modify_string_attr(value_ptr: Pointer, out_length: isize) -> String {
             input_wtext_to_string(value_ptr as *const _, out_length)
         }
 

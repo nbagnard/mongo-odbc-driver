@@ -368,7 +368,7 @@ mod unit {
                     assert_eq!(expected.len() as isize, *out_len_or_ind);
                     assert_eq!(
                         expected.to_string(),
-                        input_wtext_to_string(char_buffer as *const _, expected.len())
+                        input_wtext_to_string(char_buffer as *const _, expected.len() as isize)
                     );
                 };
 
@@ -487,11 +487,11 @@ mod unit {
                     assert_eq!(expected_out_len, *out_len_or_ind);
                     assert_eq!(
                         expected.to_string(),
-                        input_wtext_to_string(char_buffer as *const _, expected.chars().count())
+                        input_wtext_to_string(char_buffer as *const _, expected.chars().count() as isize)
                     );
                     assert_eq!(
                         expected.to_string(),
-                        input_wtext_to_string(char_buffer as *const _, expected.chars().count())
+                        input_wtext_to_string(char_buffer as *const _, expected.chars().count() as isize)
                     );
                 };
 

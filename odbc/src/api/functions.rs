@@ -934,7 +934,7 @@ pub unsafe extern "C" fn SQLDriverConnectW(
             }
             let conn = must_be_valid!((*conn_handle).as_connection());
             let odbc_uri_string =
-                input_wtext_to_string(in_connection_string, string_length_1 as usize);
+                input_wtext_to_string(in_connection_string, string_length_1 as isize);
             let mongo_connection =
                 odbc_unwrap!(sql_driver_connect(conn, &odbc_uri_string), conn_handle);
             conn.write().unwrap().mongo_connection = Some(mongo_connection);
@@ -1067,7 +1067,7 @@ pub unsafe extern "C" fn SQLExecDirectW(
 ) -> SqlReturn {
     panic_safe_exec!(
         || {
-            let query = input_wtext_to_string(statement_text, text_length as usize);
+            let query = input_wtext_to_string(statement_text, text_length as isize);
             let mongo_handle = MongoHandleRef::from(statement_handle);
             let stmt = must_be_valid!(mongo_handle.as_statement());
             let mongo_statement = {
@@ -3422,10 +3422,10 @@ pub unsafe extern "C" fn SQLTablesW(
         || {
             let mongo_handle = MongoHandleRef::from(statement_handle);
             let stmt = must_be_valid!((*mongo_handle).as_statement());
-            let catalog = input_wtext_to_string(catalog_name, name_length_1 as usize);
-            let schema = input_wtext_to_string(schema_name, name_length_2 as usize);
-            let table = input_wtext_to_string(table_name, name_length_3 as usize);
-            let table_t = input_wtext_to_string(table_type, name_length_4 as usize);
+            let catalog = input_wtext_to_string(catalog_name, name_length_1 as isize);
+            let schema = input_wtext_to_string(schema_name, name_length_2 as isize);
+            let table = input_wtext_to_string(table_name, name_length_3 as isize);
+            let table_t = input_wtext_to_string(table_type, name_length_4 as isize);
             let connection = stmt.read().unwrap().connection;
             let mongo_statement = sql_tables(
                 (*connection)
