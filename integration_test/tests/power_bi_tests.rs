@@ -106,7 +106,7 @@ mod integration {
             let driver_connect_outcome = SQLDriverConnectW(dbc as HDbc,
                                             null_mut(),
                                             in_connection_string_encoded.as_ptr(),
-                                            BUFFER_LENGTH,
+                                            SQL_NTS,
                                             out_connection_string,
                                             BUFFER_LENGTH,
                                             string_length_2,

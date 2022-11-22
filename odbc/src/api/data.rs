@@ -858,7 +858,7 @@ pub unsafe fn input_wtext_to_string(text: *const WChar, len: usize) -> String {
 
     let mut dst = Vec::with_capacity(len);
     dst.set_len(len);
-    file_dbg!(format!("Size of Wchat = {}", size_of::<WChar>()));
+    file_dbg!(format!("Size of Wchar = {}", size_of::<WChar>()));
     file_dbg!(format!("dst.len = {}", dst.len()));
     let dest_ptr= dst.as_mut_ptr();
     file_dbg!(format!("dest_ptr = {}", dest_ptr as u64));
