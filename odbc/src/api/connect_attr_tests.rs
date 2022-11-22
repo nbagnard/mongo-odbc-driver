@@ -53,7 +53,7 @@ mod unit {
                     );
 
                     $(assert_eq!($expected_length, *out_length);)?
-                    $(assert_eq!($expected_value, $actual_value_modifier(value_ptr, *out_length as usize));)?
+                    $(assert_eq!($expected_value, $actual_value_modifier(value_ptr, *out_length as isize));)?
 
                     let _ = Box::from_raw(value_ptr);
                 }
