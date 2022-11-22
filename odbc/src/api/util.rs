@@ -1,4 +1,4 @@
-use odbc_sys::ConnectionAttribute;
+use odbc_sys::{ConnectionAttribute, SqlReturn};
 
 pub(crate) fn connection_attribute_to_string(attr: ConnectionAttribute) -> String {
     match attr {
@@ -34,6 +34,25 @@ pub(crate) fn format_version(major: &str, minor: &str, patch: &str) -> String {
         format_version_part(minor, 2),
         format_version_part(patch, 4)
     )
+}
+
+// Verifies that the expected SQL State, message text, and native error in the handle match
+// the expected input
+pub fn outcome_to_str(sql_return: SqlReturn) -> String {
+
+    let outcome = match sql_return {
+        SqlReturn::SUCCESS => {"SUCCESS"},
+        SqlReturn::ERROR => {"ERROR"},
+        SqlReturn::SUCCESS_WITH_INFO => {"SUCCESS_WITH_INFO"},
+        SqlReturn::INVALID_HANDLE => {"INVALID_HANDLE"},
+        SqlReturn::NEED_DATA  => {"NEED_DATA"},
+        SqlReturn::NO_DATA  => {"NO_DATA"},
+        SqlReturn::PARAM_DATA_AVAILABLE => {"PARAM_DATA_AVAILABLE"},
+        SqlReturn::STILL_EXECUTING => {"STILL_EXECUTING"},
+        _ => {"unknown sql_return"},
+
+    };
+    String::from(outcome)
 }
 
 fn format_version_part(part: &str, len: usize) -> String {

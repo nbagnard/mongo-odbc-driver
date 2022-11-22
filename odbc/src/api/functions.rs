@@ -7,7 +7,7 @@ use crate::{
         definitions::*,
         errors::{ODBCError, Result},
         odbc_uri::ODBCUri,
-        util::{connection_attribute_to_string, format_version},
+        util::{connection_attribute_to_string, format_version, outcome_to_str},
     },
     handles::definitions::*,
 
@@ -966,7 +966,7 @@ pub unsafe extern "C" fn SQLDriverConnectW(
                 string_length_2,
             );
             file_dbg!(format!("string_length_2 = {}", *string_length_2));
-            file_dbg!(format!("sql_return = {}", sql_return as usize));
+            file_dbg!(format!("sql_return = {}", outcome_to_str(sql_return)));
             //file_dbg!(format!("out_connection_string = {}", input_wtext_to_string(out_connection_string, *string_length_2 as usize)));
             if sql_return == SqlReturn::SUCCESS_WITH_INFO {
                 conn_handle.add_diag_info(ODBCError::OutStringTruncated(buffer_len));
