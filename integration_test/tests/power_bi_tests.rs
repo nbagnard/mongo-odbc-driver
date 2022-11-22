@@ -46,7 +46,6 @@ mod integration {
         let env_handle: HEnv = setup();
         unsafe {
 
-
             let mut odbc_version = 0;
             println!("odbcVersion = {}", odbc_version);
             let p_odbc_version = &mut odbc_version as *mut i32 as *mut c_void;
@@ -67,14 +66,14 @@ mod integration {
                 SQLAllocHandle(HandleType::Dbc, env_handle as *mut _, &mut dbc as *mut Handle));
 
             let mut login_timeout = 0;
-            let p_login_timeout = &mut login_timeout as *mut i32 as *mut c_void;
+            //let p_login_timeout = &mut login_timeout as *mut i32 as *mut c_void;
 
             assert_eq!(
                 SqlReturn::SUCCESS,
                 SQLSetConnectAttrW(
                     dbc as HDbc,
                     ConnectionAttribute::LoginTimeout,
-                    p_login_timeout,
+                    login_timeout.into(),
                     0,
                 ));
 
@@ -88,17 +87,6 @@ mod integration {
             const BUFFER_LENGTH: SmallInt = 300;
             let out_connection_string = &mut [0u16; (BUFFER_LENGTH as usize - 1)] as *mut _;
 
-            /*
-            odbct32w        1c74-18a8   ENTER SQLDriverConnectW
-            HDBC                0x0000000000488FB0
-            HWND                0x0000000000260548
-            WCHAR *             0x00007FFA9C7CCF80 [      -3] "******\ 0"
-            SWORD                       -3
-            WCHAR *             0x00007FFA9C7CCF80
-            SWORD                       -3
-            SWORD *             0x0000000000000000
-            UWORD                        0 <SQL_DRIVER_NOPROMPT>
-             */
             let in_conn_ptr : *mut WChar = in_connection_string_encoded.as_mut_ptr();
             print_text("in_connection_string = ", -3, in_conn_ptr );
 
