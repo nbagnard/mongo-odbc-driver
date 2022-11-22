@@ -1,4 +1,5 @@
 use std::env;
+use std::intrinsics::copy_nonoverlapping;
 use std::ptr::null_mut;
 use odbc_sys::{AttrConnectionPooling, AttrOdbcVersion, EnvironmentAttribute, Handle, HandleType, HEnv, SQLAllocHandle, SqlReturn, SQLSetEnvAttr, WChar};
 
@@ -37,11 +38,27 @@ pub fn generate_default_connection_str() -> String {
 }
 
 /// Prints the content of a given char buffer.
-pub fn printText(label: &str, txt_len: usize, text: *mut WChar)
+pub fn print_text(label: &str, txt_len: isize, text: *mut WChar)
 {
     unsafe {
-        let txt = &(String::from_utf16_lossy( & * (text as * const [u16; 256])))[0..txt_len];
-        println!("{} = {}",label, txt);
+        if txt_len < 0 {
+            let mut dst = Vec::new();
+            let mut itr = text;
+            {
+                while *itr != 0 {
+                    dst.push(*itr);
+                    itr = itr.offset(1);
+                }
+            }
+            println!("{} = {}",label, String::from_utf16_lossy(&dst));
+            return
+        }
+
+        let mut dst = Vec::with_capacity(txt_len as usize);
+        dst.set_len(txt_len as usize);
+        copy_nonoverlapping(text, dst.as_mut_ptr(), txt_len as usize);
+
+        println!("{} = {}",label, String::from_utf16_lossy(&dst));
     }
 }
 

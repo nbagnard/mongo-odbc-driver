@@ -4,9 +4,9 @@ mod integration {
     use std::ffi::c_void;
     use std::ptr::null_mut;
     use odbc::ffi::SQL_NTS;
-    use odbc_sys::{Handle, HandleType, HEnv, SqlReturn, SQLFreeHandle, EnvironmentAttribute, SQLAllocHandle, SQLSetConnectAttrW, HDbc, ConnectionAttribute, DriverConnectOption, SmallInt, SQLDriverConnectW, SQLGetDiagRecW, SQLGetEnvAttr};
+    use odbc_sys::{Handle, HandleType, HEnv, SqlReturn, SQLFreeHandle, EnvironmentAttribute, SQLAllocHandle, SQLSetConnectAttrW, HDbc, ConnectionAttribute, DriverConnectOption, SmallInt, SQLDriverConnectW, SQLGetDiagRecW, SQLGetEnvAttr, WChar};
     use crate::common;
-    use crate::common::{setup};
+    use crate::common::{print_text, setup};
 
     /// Test PowerBI Setup flow
     #[test]
@@ -101,10 +101,12 @@ mod integration {
             SWORD *             0x0000000000000000
             UWORD                        0 <SQL_DRIVER_NOPROMPT>
              */
+            let in_conn_ptr : *mut WChar = in_connection_string_encoded.as_mut_ptr();
+            print_text("in_connection_string = ", -3, in_conn_ptr );
             dbg!(">>>> pbi test - SQLDriverConnectW");
             let driver_connect_outcome = SQLDriverConnectW(dbc as HDbc,
                                             null_mut(),
-                                            in_connection_string_encoded.as_ptr(),
+                                       in_conn_ptr,
                                             BUFFER_LENGTH,
                                             out_connection_string,
                                             BUFFER_LENGTH,
@@ -113,14 +115,12 @@ mod integration {
             dbg!("<<<< pbi test - SQLDriverConnectW");
 
             dbg!(*string_length_2);
-            println!("out_connection_string size = {}", *string_length_2 as usize);
-
+            print_text("out_connection_string = ", *string_length_2 as isize, out_connection_string);
             if (driver_connect_outcome == SqlReturn::ERROR)
             {
                 println!("SQLDriver connect failed");
             }
 
-            /*
             let text_length_ptr = &mut 0;
             let actual_sql_state = &mut [0u16; 6] as *mut _;
             let actual_message_text = &mut [0u16; 512] as *mut _;
@@ -137,8 +137,7 @@ mod integration {
                 text_length_ptr,
             );
 
-            print_text("error", *text_length_ptr as usize, actual_message_text);
-             */
+            print_text("error", *text_length_ptr as isize, actual_message_text);
         }
     }
 }
