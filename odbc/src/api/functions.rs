@@ -139,7 +139,6 @@ pub unsafe extern "C" fn SQLAllocHandle(
 ) -> SqlReturn {
     panic_safe_exec!(
         || {
-           file_dbg!();
             match sql_alloc_handle(handle_type, input_handle as *mut _, output_handle) {
                 Ok(_) => SqlReturn::SUCCESS,
                 Err(_) => SqlReturn::INVALID_HANDLE,

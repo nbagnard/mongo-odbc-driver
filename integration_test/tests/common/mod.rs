@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use std::env;
-use std::ptr::null_mut;
+use std::ptr::{copy_nonoverlapping, null_mut};
 use odbc_sys::{Handle, HandleType, WChar, SQLGetDiagRecW, SQLAllocHandle, SqlReturn, SQLSetEnvAttr, HEnv, EnvironmentAttribute, AttrOdbcVersion, AttrConnectionPooling};
 
 /// Generate the default connection setting defined for the tests using a connection string
@@ -63,7 +63,7 @@ pub fn verify_sql_diagnostics(
             text_length_ptr,
         );
 
-        print_text("error message", *text_length_ptr as usize, actual_message_text);
+        print_text("error message", *text_length_ptr as isize, actual_message_text);
     };
     let mut expected_sql_state_encoded: Vec<u16> = expected_sql_state.encode_utf16().collect();
     expected_sql_state_encoded.push(0);
@@ -105,7 +105,7 @@ pub fn print_sql_diagnostics(
         );
     };
     dbg!(*actual_native_error);
-    print_text("error message", *text_length_ptr as usize, actual_message_text);
+    print_text("error message", *text_length_ptr as isize, actual_message_text);
 }
 
 // Verifies that the expected SQL State, message text, and native error in the handle match
@@ -131,14 +131,28 @@ pub fn print_outcome(
 }
 
 
-pub fn print_text(label: &str, txt_len: usize, text: *mut WChar)
+pub fn print_text(label: &str, txt_len: isize, text: *mut WChar)
 {
     unsafe {
-        //println!("text_length = {}", *text_length_ptr);
+        if txt_len < 0 {
+            let mut dst = Vec::new();
+            let mut itr = text;
+            {
+                while *itr != 0 {
+                    dst.push(*itr);
+                    itr = itr.offset(1);
+                }
+            }
+            println!("{} = {}",label, String::from_utf16_lossy(&dst));
+            return
+        }
 
-        //let txt_len = *text_length_ptr as usize;
-        let error_message = &(String::from_utf16_lossy( & * (text as * const [u16; 256])))[0..txt_len];
-        println!("{} = {}",label, error_message);
+        let mut dst = Vec::with_capacity(txt_len as usize);
+        dst.set_len(txt_len as usize);
+        copy_nonoverlapping(text, dst.as_mut_ptr(), txt_len as usize);
+
+        println!("{} = {}",label, String::from_utf16_lossy(&dst));
+
     }
 }
 

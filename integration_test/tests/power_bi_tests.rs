@@ -4,7 +4,7 @@ mod integration {
     use std::ffi::c_void;
     use std::ptr::null_mut;
     use odbc::ffi::SQL_NTS;
-    use odbc_sys::{Handle, HandleType, HEnv, SqlReturn, SQLFreeHandle, EnvironmentAttribute, SQLAllocHandle, SQLSetConnectAttrW, HDbc, ConnectionAttribute, DriverConnectOption, SmallInt, SQLDriverConnectW, SQLGetDiagRecW, SQLGetEnvAttr};
+    use odbc_sys::{Handle, HandleType, HEnv, SqlReturn, SQLFreeHandle, EnvironmentAttribute, SQLAllocHandle, SQLSetConnectAttrW, HDbc, ConnectionAttribute, DriverConnectOption, SmallInt, SQLDriverConnectW, SQLGetDiagRecW, SQLGetEnvAttr, WChar};
     use crate::common;
     use crate::common::{print_outcome, print_sql_diagnostics, print_text, setup};
 
@@ -62,7 +62,6 @@ mod integration {
 
             let mut dbc: Handle = null_mut();
 
-            // Verify that freeing the handle is working as expected
             assert_eq!(
                 SqlReturn::SUCCESS,
                 SQLAllocHandle(HandleType::Dbc, env_handle as *mut _, &mut dbc as *mut Handle));
@@ -100,6 +99,9 @@ mod integration {
             SWORD *             0x0000000000000000
             UWORD                        0 <SQL_DRIVER_NOPROMPT>
              */
+            let in_conn_ptr : *mut WChar = in_connection_string_encoded.as_mut_ptr();
+            print_text("in_connection_string = ", -3, in_conn_ptr );
+
             dbg!(">>>> pbi test - SQLDriverConnectW");
             let driver_connect_outcome = SQLDriverConnectW(dbc as HDbc,
                                             null_mut(),
@@ -115,7 +117,7 @@ mod integration {
                            driver_connect_outcome);
 
             dbg!(*string_length_2);
-            print_text("out_connection_string", *string_length_2 as usize, out_connection_string);
+            print_text("out_connection_string = ", *string_length_2 as isize, out_connection_string);
 
             if driver_connect_outcome == SqlReturn::ERROR
             {
