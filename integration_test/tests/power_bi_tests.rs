@@ -137,6 +137,10 @@ mod integration {
                     let error_msg = get_sql_diagnostics(HandleType::Dbc, dbc);
                     panic!("SQLDriverConnectW failed {}", error_msg);
                 }
+                SqlReturn::SUCCESS_WITH_INFO => {
+                    let error_msg = get_sql_diagnostics(HandleType::Dbc, dbc);
+                    println!("SUCCESS_WITH_INFO : {}", error_msg );
+                }
                 _ => {}
             };
 
@@ -176,6 +180,10 @@ mod integration {
                 )
             );
 
+            let actual_message_length = *out_string_length as usize;
+            println!("DBMS name : {}", &(String::from_utf16_lossy(&*(out_dbms_name as *const [u16; BUFFER_LENGTH as usize])))
+                [0..actual_message_length], );
+
             // SQLGetInfoW(SQL_DBMS_VER)
             let out_dbms_version = &mut [0u16; (BUFFER_LENGTH as usize - 1)] as *mut _;
             let out_string_length = &mut 0;
@@ -189,6 +197,10 @@ mod integration {
                     out_string_length
                 )
             );
+
+            let actual_message_length = *out_string_length as usize;
+            println!("DBMS ver : {}", &(String::from_utf16_lossy(&*(out_dbms_name as *const [u16; BUFFER_LENGTH as usize])))
+                [0..actual_message_length], );
         }
     }
 }
