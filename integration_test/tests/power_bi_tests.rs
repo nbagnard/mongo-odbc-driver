@@ -139,13 +139,18 @@ mod integration {
                 }
                 SqlReturn::SUCCESS_WITH_INFO => {
                     let error_msg = get_sql_diagnostics(HandleType::Dbc, dbc);
-                    println!("SUCCESS_WITH_INFO : {}", error_msg );
+                    println!("SUCCESS_WITH_INFO : {}", error_msg);
                 }
                 _ => {}
             };
 
-            println!("Ouput connection string : {}", wtext_to_string(out_connection_string as *const WChar, *out_string_length as usize));
-
+            println!(
+                "Ouput connection string : {}",
+                wtext_to_string(
+                    out_connection_string as *const WChar,
+                    *out_string_length as usize
+                )
+            );
 
             // ---- Get driver info --- //
             // SQLGetInfoW(SQL_DRIVER_NAME)
@@ -183,7 +188,10 @@ mod integration {
                 )
             );
 
-            println!("DBMS name : {}", wtext_to_string(out_dbms_name as *const WChar, *out_string_length as usize));
+            println!(
+                "DBMS name : {}",
+                wtext_to_string(out_dbms_name as *const WChar, *out_string_length as usize)
+            );
 
             // SQLGetInfoW(SQL_DBMS_VER)
             let out_dbms_version = &mut [0u16; (BUFFER_LENGTH as usize - 1)] as *mut _;
@@ -199,8 +207,88 @@ mod integration {
                 )
             );
 
-            println!("DBMS version : {}", wtext_to_string(out_dbms_version as *const WChar, *out_string_length as usize));
+            println!(
+                "DBMS version : {}",
+                wtext_to_string(
+                    out_dbms_version as *const WChar,
+                    *out_string_length as usize
+                )
+            );
+        }
+    }
 
+    #[test]
+    fn rep_crashing_odbc_test() {
+        unsafe {
+            // First setup the environment handle
+            let mut env_handle: Handle = null_mut();
+            assert_eq!(
+                SqlReturn::SUCCESS,
+                SQLAllocHandle(HandleType::Env, null_mut(), &mut env_handle as *mut Handle)
+            );
+
+            assert_eq!(
+                SqlReturn::SUCCESS,
+                SQLSetEnvAttr(
+                    env_handle as HEnv,
+                    EnvironmentAttribute::OdbcVersion,
+                    AttrOdbcVersion::Odbc3.into(),
+                    0,
+                )
+            );
+
+            // ---- Allocate the DB handle --- //
+            let mut dbc: Handle = null_mut();
+            // SQLAllocHandle(SQL_HANDLE_DBC)
+            assert_eq!(
+                SqlReturn::SUCCESS,
+                SQLAllocHandle(
+                    HandleType::Dbc,
+                    env_handle as *mut _,
+                    &mut dbc as *mut Handle
+                )
+            );
+
+            // ---- Connect --- //
+            let in_connection_string = common::generate_default_connection_str();
+            let mut in_connection_string_encoded: Vec<u16> =
+                in_connection_string.encode_utf16().collect();
+            in_connection_string_encoded.push(0);
+
+            let driver_completion = DriverConnectOption::NoPrompt;
+            let out_string_length = &mut 0;
+            const BUFFER_LENGTH: SmallInt = 300;
+            let out_connection_string = &mut [0u16; (BUFFER_LENGTH as usize - 1)] as *mut _;
+
+            // SQLDriverConnectW({NullTerminatedInConnectionString}, SQL_NTS, {NullTerminatedOutConnectionString}, SQL_NTS, SQL_DRIVER_NOPROMPT)
+            match SQLDriverConnectW(
+                dbc as HDbc,
+                null_mut(),
+                in_connection_string_encoded.as_ptr(),
+                SQL_NTS,
+                out_connection_string,
+                BUFFER_LENGTH,
+                out_string_length,
+                driver_completion,
+            ) {
+                SqlReturn::ERROR => {
+                    let error_msg = get_sql_diagnostics(HandleType::Dbc, dbc);
+                    panic!("SQLDriverConnectW failed {}", error_msg);
+                }
+                SqlReturn::SUCCESS_WITH_INFO => {
+                    let error_msg = get_sql_diagnostics(HandleType::Dbc, dbc);
+                    println!("SUCCESS_WITH_INFO : {}", error_msg);
+                }
+                _ => {}
+            };
+
+            println!(
+                "Ouput connection string : {}",
+                wtext_to_string(
+                    out_connection_string as *const WChar,
+                    *out_string_length as usize
+                )
+            );
         }
     }
 }
