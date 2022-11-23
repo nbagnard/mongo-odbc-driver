@@ -233,7 +233,7 @@ mod integration {
                     env_handle as HEnv,
                     EnvironmentAttribute::OdbcVersion,
                     AttrOdbcVersion::Odbc3.into(),
-                    0,
+                    SQL_NTS as Integer,
                 )
             );
 
