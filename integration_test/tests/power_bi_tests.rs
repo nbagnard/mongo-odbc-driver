@@ -49,7 +49,7 @@ fn setup() -> odbc_sys::HEnv {
 
 mod integration {
     use super::*;
-    use crate::common::{get_sql_diagnostics};
+    use crate::common::{get_sql_diagnostics, wtext_to_string};
     use odbc::ffi::SQL_NTS;
     /// Test PowerBI Setup flow
     #[test]
@@ -144,6 +144,9 @@ mod integration {
                 _ => {}
             };
 
+            println!("Ouput connection string : {}", wtext_to_string(out_connection_string as *const WChar, *out_string_length as usize));
+
+
             // ---- Get driver info --- //
             // SQLGetInfoW(SQL_DRIVER_NAME)
             /*
@@ -180,9 +183,7 @@ mod integration {
                 )
             );
 
-            let actual_message_length = *out_string_length as usize;
-            println!("DBMS name : {}", &(String::from_utf16_lossy(&*(out_dbms_name as *const [u16; BUFFER_LENGTH as usize])))
-                [0..actual_message_length], );
+            println!("DBMS name : {}", wtext_to_string(out_dbms_name as *const WChar, *out_string_length as usize));
 
             // SQLGetInfoW(SQL_DBMS_VER)
             let out_dbms_version = &mut [0u16; (BUFFER_LENGTH as usize - 1)] as *mut _;
@@ -198,9 +199,8 @@ mod integration {
                 )
             );
 
-            let actual_message_length = *out_string_length as usize;
-            println!("DBMS ver : {}", &(String::from_utf16_lossy(&*(out_dbms_name as *const [u16; BUFFER_LENGTH as usize])))
-                [0..actual_message_length], );
+            println!("DBMS version : {}", wtext_to_string(out_dbms_version as *const WChar, *out_string_length as usize));
+
         }
     }
 }
