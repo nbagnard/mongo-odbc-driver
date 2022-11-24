@@ -48,7 +48,7 @@ impl MongoConnection {
         file_dbg!(">>>> MongoConnection::connect");
         file_dbg!(">>>>> ClientOptions::parse");
         let mut client_options_res =
-            ClientOptions::parse(mongo_uri);
+            ClientOptions::parse("DRIVER={ADF_ODBC_DRIVER};PWD=pencil;USER=mhuser;SERVER=localhost;AUTH_SRC=admin;");
         match client_options_res {
             Ok(mut client_options) => {
                 file_dbg!("<<<<< ClientOptions::parse");
