@@ -134,26 +134,56 @@ pub fn print_outcome(
 pub fn print_text(label: &str, txt_len: isize, text: *mut WChar)
 {
     unsafe {
-        if txt_len < 0 {
-            let mut dst = Vec::new();
-            let mut itr = text;
-            {
-                while *itr != 0 {
-                    dst.push(*itr);
-                    itr = itr.offset(1);
-                }
-            }
-            println!("{} = {}",label, String::from_utf16_lossy(&dst));
-            return
-        }
-
-        let mut dst = Vec::with_capacity(txt_len as usize);
-        dst.set_len(txt_len as usize);
-        copy_nonoverlapping(text, dst.as_mut_ptr(), txt_len as usize);
-
-        println!("{} = {}",label, String::from_utf16_lossy(&dst));
+        println!("{} = {}",label, wtext_to_string(text, txt_len as usize));
 
     }
+}
+
+// Verifies that the expected SQL State, message text, and native error in the handle match
+// the expected input
+pub fn get_sql_diagnostics(handle_type: HandleType, handle: Handle) -> String {
+    let text_length_ptr = &mut 0;
+    let actual_sql_state = &mut [0u16; 6] as *mut _;
+    let actual_message_text = &mut [0u16; 512] as *mut _;
+    let actual_native_error = &mut 0;
+    unsafe {
+        let _ = SQLGetDiagRecW(
+            handle_type,
+            handle as *mut _,
+            1,
+            actual_sql_state,
+            actual_native_error,
+            actual_message_text,
+            1024,
+            text_length_ptr,
+        );
+    };
+    dbg!(*actual_native_error);
+    unsafe {
+        wtext_to_string(
+            actual_message_text,
+            *text_length_ptr as usize
+        )
+    }
+}
+
+pub unsafe fn wtext_to_string(text: *const WChar, len: usize) -> String {
+    if (len as isize) < 0 {
+        let mut dst = Vec::new();
+        let mut itr = text;
+        {
+            while *itr != 0 {
+                dst.push(*itr);
+                itr = itr.offset(1);
+            }
+        }
+        return String::from_utf16_lossy(&dst);
+    }
+
+    let mut dst = Vec::with_capacity(len);
+    dst.set_len(len);
+    copy_nonoverlapping(text, dst.as_mut_ptr(), len);
+    String::from_utf16_lossy(&dst)
 }
 
 

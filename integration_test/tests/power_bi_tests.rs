@@ -2,7 +2,7 @@ mod common;
 
 mod integration {
     use crate::common;
-    use crate::common::{print_outcome, print_sql_diagnostics, print_text, setup};
+    use crate::common::{get_sql_diagnostics, print_outcome, print_sql_diagnostics, print_text, setup, wtext_to_string};
     use odbc::ffi::SQL_NTS;
     use odbc_sys::{ConnectionAttribute, DriverConnectOption, EnvironmentAttribute, HDbc, HEnv, Handle, HandleType, SQLAllocHandle, SQLDriverConnectW, SQLFreeHandle, SQLGetDiagRecW, SQLGetEnvAttr, SQLSetConnectAttrW, SmallInt, SqlReturn, WChar, SQLSetEnvAttr, AttrOdbcVersion};
     use std::ffi::c_void;
