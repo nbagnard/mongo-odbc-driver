@@ -2333,7 +2333,7 @@ unsafe fn sql_get_infow_helper(
             let sql_return = i16_len::set_output_fixed_data(&SQL_U16_ZERO, info_value_ptr, string_length_ptr );
             file_dbg!(*(info_value_ptr as *mut u16));
             file_dbg!(outcome_to_str(sql_return));
-            return outcome
+            return sql_return
         }
         _ => SqlReturn::SUCCESS,
     }
