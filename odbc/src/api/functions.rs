@@ -893,7 +893,12 @@ pub unsafe extern "C" fn SQLDriverConnect(
             let conn = must_be_valid!((*conn_handle).as_connection());
             let odbc_uri_string =
                 input_text_to_string(in_connection_string, string_length_1 as usize);
-            let mongo_connection = sql_driver_connect(conn, &odbc_uri_string).unwrap();
+            let mongo_connection_res = sql_driver_connect(conn, &odbc_uri_string);
+            if let Err(error) = mongo_connection_res {
+                conn_handle.add_diag_info(error.into());
+                return SqlReturn::ERROR;
+            }
+            let mongo_connection = mongo_connection_res.unwrap();
             conn.write().unwrap().mongo_connection = Some(mongo_connection);
             let buffer_len = usize::try_from(buffer_length).unwrap();
             let sql_return = i16_len::set_output_string(
