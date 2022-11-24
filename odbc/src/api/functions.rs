@@ -3491,12 +3491,17 @@ pub unsafe extern "C" fn SQLTablesW(
 ) -> SqlReturn {
     panic_safe_exec!(
         || {
+            file_dbg!(">>>>> SQLTablesW");
             let mongo_handle = MongoHandleRef::from(statement_handle);
             let stmt = must_be_valid!((*mongo_handle).as_statement());
             let catalog = input_wtext_to_string(catalog_name, name_length_1 as usize);
+            file_dbg!(format!("catalog {}", catalog));
             let schema = input_wtext_to_string(schema_name, name_length_2 as usize);
+            file_dbg!(format!("schema {}", schema));
             let table = input_wtext_to_string(table_name, name_length_3 as usize);
+            file_dbg!(format!("table {}", table));
             let table_t = input_wtext_to_string(table_type, name_length_4 as usize);
+            file_dbg!(format!("table_t {}", table_t));
             let connection = stmt.read().unwrap().connection;
             let mongo_statement = sql_tables(
                 (*connection)
@@ -3515,6 +3520,7 @@ pub unsafe extern "C" fn SQLTablesW(
             );
             let mongo_statement = odbc_unwrap!(mongo_statement, mongo_handle);
             stmt.write().unwrap().mongo_statement = Some(mongo_statement);
+            file_dbg!("<<<<<< SQLTablesW");
             SqlReturn::SUCCESS
         },
         statement_handle
