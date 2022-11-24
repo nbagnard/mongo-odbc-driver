@@ -47,32 +47,42 @@ impl MongoConnection {
     ) -> Result<Self> {
         file_dbg!(">>>> MongoConnection::connect");
         file_dbg!(">>>>> ClientOptions::parse");
-        let mut client_options =
-            ClientOptions::parse(mongo_uri).map_err(Error::MongoParseConnectionString)?;
-        file_dbg!("<<<<< ClientOptions::parse");
-        client_options.connect_timeout = login_timeout.map(|to| Duration::new(to as u64, 0));
-        file_dbg!(format!("client_options.connect_timeout = {}", client_options.connect_timeout.unwrap_or(Duration::new(0,10)).as_millis()));
-        // set application name, note that users can set their own application name, or we default
-        // to mongo-odbc-driver.
-        client_options.app_name = application_name
-            .map(String::from)
-            .or_else(|| Some(MONGODB_ODBC_DRIVER.to_string()));
-        file_dbg!(">>>> Client::with_options");
-        //file_dbg!(client_options);
-        let client = Client::with_options(client_options)?;
-        file_dbg!("<<<< Client::with_options");
-        // run the "ping" command on the `auth_src` database. We assume this requires the
-        // fewest permissions of anything we can do to verify a connection.
-        file_dbg!(">>>> ping");
-        client
-            .database(auth_src)
-            .run_command(doc! {"ping": 1}, None)?;
-        file_dbg!("<<<< ping");
-        Ok(MongoConnection {
-            client,
-            current_db: current_db.map(String::from),
-            operation_timeout: operation_timeout.map(|to| Duration::new(to as u64, 0)),
-        })
+        let mut client_options_res =
+            ClientOptions::parse(mongo_uri);
+        match client_options_res {
+            Ok(mut client_options) => {
+                file_dbg!("<<<<< ClientOptions::parse");
+                client_options.connect_timeout = login_timeout.map(|to| Duration::new(to as u64, 0));
+                file_dbg!(format!("client_options.connect_timeout = {}", client_options.connect_timeout.unwrap_or(Duration::new(0,10)).as_millis()));
+                // set application name, note that users can set their own application name, or we default
+                // to mongo-odbc-driver.
+                client_options.app_name = application_name
+                    .map(String::from)
+                    .or_else(|| Some(MONGODB_ODBC_DRIVER.to_string()));
+                file_dbg!(">>>> Client::with_options");
+                //file_dbg!(client_options);
+                let client = Client::with_options(client_options)?;
+                file_dbg!("<<<< Client::with_options");
+                // run the "ping" command on the `auth_src` database. We assume this requires the
+                // fewest permissions of anything we can do to verify a connection.
+                file_dbg!(">>>> ping");
+                client
+                    .database(auth_src)
+                    .run_command(doc! {"ping": 1}, None)?;
+                file_dbg!("<<<< ping");
+                Ok(MongoConnection {
+                    client,
+                    current_db: current_db.map(String::from),
+                    operation_timeout: operation_timeout.map(|to| Duration::new(to as u64, 0)),
+                })
+            }
+            Err(err) => {
+                file_dbg!(err);
+                Err(Error::MongoParseConnectionString(err))
+            }
+        }
+        //.map_err(Error::MongoParseConnectionString)?;
+
     }
 
     /// Gets the ADF version the client is connected to.
