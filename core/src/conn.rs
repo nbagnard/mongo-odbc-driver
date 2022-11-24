@@ -45,6 +45,7 @@ impl MongoConnection {
         login_timeout: Option<u32>,
         application_name: Option<&str>,
     ) -> Result<Self> {
+        file_dbg!(">>>> MongoConnection::connect");
         let mut client_options =
             ClientOptions::parse(mongo_uri).map_err(Error::MongoParseConnectionString)?;
         client_options.connect_timeout = login_timeout.map(|to| Duration::new(to as u64, 0));

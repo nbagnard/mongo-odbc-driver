@@ -851,7 +851,7 @@ fn sql_driver_connect(
     // ODBCError has an impl From mongo_odbc_core::Error, but that does not
     // create an impl From Result<T, mongo_odbc_core::Error> to Result<T, ODBCError>
     // hence this bizarre Ok(func?) pattern.
-    file_dbg!(">>>> MongoConnection::connect");
+
     Ok(mongo_odbc_core::MongoConnection::connect(
         &mongo_uri,
         auth_src,
@@ -2141,8 +2141,7 @@ unsafe fn sql_get_infow_helper(
         InfoType::GroupBy => {
             file_dbg!("SQL_GROUP_BY");
             // The GROUP BY clause must contain all nonaggregated columns
-            // in the select list. It can contain columns that are not in
-            // the select list.
+            // in the select list. It can contain columns that are not in // the select list.
             i16_len::set_output_fixed_data(
                 &SQL_GB_GROUP_BY_CONTAINS_SELECT,
                 info_value_ptr,
@@ -2331,13 +2330,15 @@ unsafe fn sql_get_infow_helper(
         InfoType::MaxIdentifierLen => {
             file_dbg!("SQL_MAX_IDENTIFIER_LEN");
             // MongoSQL does not have a maximum identifier length.
-            let outcome = i16_len::set_output_fixed_data(&SQL_U16_ZERO, info_value_ptr, string_length_ptr );
+            let sql_return = i16_len::set_output_fixed_data(&SQL_U16_ZERO, info_value_ptr, string_length_ptr );
             file_dbg!(*(info_value_ptr as *mut u16));
+            file_dbg!(outcome_to_str(sql_return));
             return outcome
         }
         _ => SqlReturn::SUCCESS,
     }
 }
+
 
 ///
 /// [`SQLGetStmtAttr`]: https://learn.microsoft.com/en-us/sql/odbc/reference/syntax/SQLGetStmtAttr-function
