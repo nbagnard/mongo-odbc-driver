@@ -1939,7 +1939,7 @@ unsafe fn sql_get_infow_helper(
             let res = {
                 let conn = must_be_valid!((*conn_handle).as_connection());
                 let c = conn.read().unwrap();
-                if c.state == ConnectionState::Connected {
+                if c.state == ConnectionState::Connected && c.mongo_connection.is_some() {
                     let version = c.mongo_connection.as_ref().unwrap().get_adf_version();
                     match version {
                         Ok(version) => i16_len::set_output_wstring(
