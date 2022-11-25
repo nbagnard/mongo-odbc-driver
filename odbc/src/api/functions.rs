@@ -1863,6 +1863,7 @@ unsafe fn sql_get_infow_helper(
     string_length_ptr: *mut SmallInt,
 ) -> SqlReturn {
     file_dbg!(">>>>> sql_get_infow_helper");
+    file_dbg!(format!("info_type {}", info_type as usize));
     match info_type {
         // SQL_DRIVER_NAME
         InfoType::DriverName => {
@@ -1938,18 +1939,27 @@ unsafe fn sql_get_infow_helper(
             let res = {
                 let conn = must_be_valid!((*conn_handle).as_connection());
                 let c = conn.read().unwrap();
-                let version = c.mongo_connection.as_ref().unwrap().get_adf_version();
-                match version {
-                    Ok(version) => i16_len::set_output_wstring(
-                        version.as_str(),
-                        info_value_ptr as *mut WChar,
-                        buffer_length as usize,
-                        string_length_ptr,
-                    ),
-                    Err(e) => {
-                        err = Some(e);
-                        SqlReturn::ERROR
+                if c.state == ConnectionState::Connected {
+                    let version = c.mongo_connection.as_ref().unwrap().get_adf_version();
+                    match version {
+                        Ok(version) => i16_len::set_output_wstring(
+                            version.as_str(),
+                            info_value_ptr as *mut WChar,
+                            buffer_length as usize,
+                            string_length_ptr,
+                        ),
+                        Err(e) => {
+                            //err = Some(General(e);
+                            err = Some(ODBCError::Core(e));
+                            SqlReturn::ERROR
+                        }
                     }
+                }
+                else {
+                    err = Some(ODBCError::UnsupportedConnectionAttribute(
+                        connection_attribute_to_string(attribute),
+                    ));
+                    SqlReturn::ERROR
                 }
             };
 
