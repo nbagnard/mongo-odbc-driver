@@ -1775,8 +1775,8 @@ pub unsafe extern "C" fn SQLGetEnvAttrW(
     _buffer_length: Integer,
     string_length: *mut Integer,
 ) -> SqlReturn {
-    panic_safe_exec!(
-        || {
+    /*panic_safe_exec!(
+        || {*/
             file_dbg!("SQLGetEnvAttrW");
             let env_handle = MongoHandleRef::from(environment_handle);
             env_handle.clear_diagnostics();
@@ -1803,9 +1803,9 @@ pub unsafe extern "C" fn SQLGetEnvAttrW(
                 }
             }
             SqlReturn::SUCCESS
-        },
+        /*},
         environment_handle
-    );
+    );*/
 }
 
 ///
