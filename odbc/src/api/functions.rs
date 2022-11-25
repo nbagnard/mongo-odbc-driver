@@ -10,7 +10,6 @@ use crate::{
         util::{connection_attribute_to_string, format_version, outcome_to_str},
     },
     handles::definitions::*,
-
 };
 use bson::Bson;
 use constants::{SQL_ALL_CATALOGS, SQL_ALL_SCHEMAS, SQL_ALL_TABLE_TYPES};
@@ -843,11 +842,20 @@ fn sql_driver_connect(
         odbc_uri.remove(&["database"])
     };
     let connection_timeout = conn_reader.attributes.connection_timeout;
-    file_dbg!(format!("connection_timeout = {}", connection_timeout.unwrap_or_else(|| 0)));
+    file_dbg!(format!(
+        "connection_timeout = {}",
+        connection_timeout.unwrap_or_else(|| 0)
+    ));
     let login_timeout = conn_reader.attributes.login_timeout;
-    file_dbg!(format!("login_timeout = {}", login_timeout.unwrap_or_else(|| 0)));
+    file_dbg!(format!(
+        "login_timeout = {}",
+        login_timeout.unwrap_or_else(|| 0)
+    ));
     let application_name = odbc_uri.remove(&["app_name", "application_name"]);
-    file_dbg!(format!("application_name = {}", application_name.unwrap_or_else(|| "")));
+    file_dbg!(format!(
+        "application_name = {}",
+        application_name.unwrap_or_else(|| "")
+    ));
     // ODBCError has an impl From mongo_odbc_core::Error, but that does not
     // create an impl From Result<T, mongo_odbc_core::Error> to Result<T, ODBCError>
     // hence this bizarre Ok(func?) pattern.
@@ -1841,18 +1849,16 @@ pub unsafe extern "C" fn SQLGetInfoW(
     buffer_length: SmallInt,
     string_length_ptr: *mut SmallInt,
 ) -> SqlReturn {
-    /*
     panic_safe_exec!(
-        ||*/
-        sql_get_infow_helper(
+        || sql_get_infow_helper(
             connection_handle,
             info_type,
             info_value_ptr,
             buffer_length,
             string_length_ptr
-        )/*,
+        ),
         connection_handle
-    );*/
+    );
 }
 
 unsafe fn sql_get_infow_helper(
@@ -1864,7 +1870,9 @@ unsafe fn sql_get_infow_helper(
 ) -> SqlReturn {
     file_dbg!(">>>>> sql_get_infow_helper");
     file_dbg!(format!("info_type {}", info_type as usize));
-    match info_type {
+    let mut err = None;
+    let conn_handle = MongoHandleRef::from(connection_handle);
+    let sql_return = match info_type {
         // SQL_DRIVER_NAME
         InfoType::DriverName => {
             file_dbg!("SQL_DRIVER_NAME");
@@ -1934,39 +1942,28 @@ unsafe fn sql_get_infow_helper(
         InfoType::DbmsVer => {
             file_dbg!("SQL_DBMS_VER");
             // Return the ADF version.
-            let mut err = None;
-            let conn_handle = MongoHandleRef::from(connection_handle);
-            let res = {
-                let conn = must_be_valid!((*conn_handle).as_connection());
-                let c = conn.read().unwrap();
-                if c.state == ConnectionState::Connected && c.mongo_connection.is_some() {
-                    let version = c.mongo_connection.as_ref().unwrap().get_adf_version();
-                    match version {
-                        Ok(version) => i16_len::set_output_wstring(
-                            version.as_str(),
-                            info_value_ptr as *mut WChar,
-                            buffer_length as usize,
-                            string_length_ptr,
-                        ),
-                        Err(e) => {
-                            //err = Some(General(e);
-                            err = Some(ODBCError::Core(e));
-                            SqlReturn::ERROR
-                        }
+            let conn = must_be_valid!((*conn_handle).as_connection());
+            let c = conn.read().unwrap();
+            if c.state == ConnectionState::Connected && c.mongo_connection.is_some() {
+                let version = c.mongo_connection.as_ref().unwrap().get_adf_version();
+                match version {
+                    Ok(version) => i16_len::set_output_wstring(
+                        version.as_str(),
+                        info_value_ptr as *mut WChar,
+                        buffer_length as usize,
+                        string_length_ptr,
+                    ),
+                    Err(e) => {
+                        //err = Some(General(e);
+                        err = Some(ODBCError::Core(e));
+                        SqlReturn::ERROR
                     }
                 }
-                else {
-                    err = Some(ODBCError::General("Can't retrieve SQL_DBMS_VER before connection"));
-                    SqlReturn::ERROR
-                }
-            };
-
-            if let Some(e) = err {
-                //conn_handle.add_diag_info(ODBCError::Core(e));
-                conn_handle.add_diag_info(e);
             }
-
-            res
+            else {
+                err = Some(ODBCError::General("Can't retrieve SQL_DBMS_VER before connection"));
+                SqlReturn::ERROR
+            }
         }
         // SQL_CONCAT_NULL_BEHAVIOR
         InfoType::ConcatNullBehavior => {
@@ -2349,10 +2346,17 @@ unsafe fn sql_get_infow_helper(
             file_dbg!(outcome_to_str(sql_return));
             return sql_return
         }
-        _ => SqlReturn::SUCCESS,
+        _ => {
+            err = Some(ODBCError::UnsupportedConnectionAttribute(
+                (info_type as usize).to_string()));
+            SqlReturn::ERROR
+        }
+    };
+    if let Some(error) = err {
+        conn_handle.add_diag_info(error);
     }
+    sql_return
 }
-
 
 ///
 /// [`SQLGetStmtAttr`]: https://learn.microsoft.com/en-us/sql/odbc/reference/syntax/SQLGetStmtAttr-function
@@ -2885,8 +2889,11 @@ pub unsafe extern "C" fn SQLSetConnectAttrW(
 
                 match attribute {
                     ConnectionAttribute::LoginTimeout => {
-                        conn_guard.attributes.login_timeout = Some(value_ptr as u32);//Some(*(value_ptr as *mut u32));
-                        file_dbg!(format!("login_timeout = {}", conn_guard.attributes.login_timeout.unwrap_or(0)));
+                        conn_guard.attributes.login_timeout = Some(value_ptr as u32); //Some(*(value_ptr as *mut u32));
+                        file_dbg!(format!(
+                            "login_timeout = {}",
+                            conn_guard.attributes.login_timeout.unwrap_or(0)
+                        ));
 
                         SqlReturn::SUCCESS
                     }
