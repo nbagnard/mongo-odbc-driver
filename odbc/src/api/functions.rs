@@ -1956,15 +1956,14 @@ unsafe fn sql_get_infow_helper(
                     }
                 }
                 else {
-                    err = Some(ODBCError::UnsupportedConnectionAttribute(
-                        connection_attribute_to_string(attribute),
-                    ));
+                    err = Some(ODBCError::General("Can't retrieve SQL_DBMS_VER before connection"));
                     SqlReturn::ERROR
                 }
             };
 
             if let Some(e) = err {
-                conn_handle.add_diag_info(ODBCError::Core(e));
+                //conn_handle.add_diag_info(ODBCError::Core(e));
+                conn_handle.add_diag_info(e);
             }
 
             res
