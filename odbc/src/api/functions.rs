@@ -1917,7 +1917,7 @@ unsafe fn sql_get_infow_helper(
             )
         }
         // SQL_SEARCH_PATTERN_ESCAPE
-        Some(Some(InfoType::SearchPatternEscape)) => {
+        Some(InfoType::SearchPatternEscape) => {
             file_dbg!("SQL_SEARCH_PATTERN_ESCAPE");
             // TODO: SQL-1060: improve sql-to-rust regex pattern method and report escape character here
             i16_len::set_output_wstring(
