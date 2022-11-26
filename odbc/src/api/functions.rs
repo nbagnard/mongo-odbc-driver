@@ -1668,7 +1668,9 @@ pub unsafe extern "C" fn SQLGetDiagFieldW(
     _buffer_length: SmallInt,
     _string_length_ptr: *mut SmallInt,
 ) -> SqlReturn {
-    unsupported_function(MongoHandleRef::from(handle), "SQLGetDiagFieldW")
+    //unsupported_function(MongoHandleRef::from(handle), "SQLGetDiagFieldW")
+    *_string_length_ptr = 0;
+    SqlReturn::SUCCESS
 }
 
 ///
