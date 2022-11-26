@@ -112,7 +112,7 @@ pub enum UseBookmarks {
 pub enum AsyncStmtEvent {}
 
 #[repr(u16)]
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, FromPrimitive)]
 pub enum InfoType {
     // SQL_DRIVER_NAME
     DriverName = 6,
