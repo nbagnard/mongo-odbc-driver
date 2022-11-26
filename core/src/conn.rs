@@ -46,7 +46,6 @@ impl MongoConnection {
         application_name: Option<&str>,
     ) -> Result<Self> {
         file_dbg!(">>>> MongoConnection::connect");
-        /*
         file_dbg!(">>>>> ClientOptions::parse");
         let mut client_options =
             ClientOptions::parse(mongo_uri).map_err(Error::MongoParseConnectionString)?;
@@ -62,8 +61,7 @@ impl MongoConnection {
         //file_dbg!(client_options);
         let client = Client::with_options(client_options)?;
         file_dbg!("<<<< Client::with_options");
-         */
-        let client = Client::with_uri_str(mongo_uri)?;
+
         // run the "ping" command on the `auth_src` database. We assume this requires the
         // fewest permissions of anything we can do to verify a connection.
         file_dbg!(">>>> ping");

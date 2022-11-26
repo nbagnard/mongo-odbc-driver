@@ -971,14 +971,17 @@ pub unsafe extern "C" fn SQLDriverConnectW(
 
             let buffer_len = usize::try_from(buffer_length).unwrap();
             file_dbg!(format!("buffer_len = {}", buffer_len));
-            let sql_return = i16_len::set_output_wstring(
-                &odbc_uri_string,
-                out_connection_string,
-                buffer_len,
-                string_length_2,
-            );
-            file_dbg!(format!("string_length_2 = {}", *string_length_2));
-            file_dbg!(format!("sql_return = {}", outcome_to_str(sql_return)));
+            let mut sql_return = SqlReturn::SUCCESS;
+            if !out_connection_string.is_null() {
+                sql_return = i16_len::set_output_wstring(
+                    &odbc_uri_string,
+                    out_connection_string,
+                    buffer_len,
+                    string_length_2,
+                );
+                file_dbg!(format!("string_length_2 = {}", *string_length_2));
+                file_dbg!(format!("sql_return = {}", outcome_to_str(sql_return)));
+            }
             //file_dbg!(format!("out_connection_string = {}", input_wtext_to_string(out_connection_string, *string_length_2 as usize)));
             if sql_return == SqlReturn::SUCCESS_WITH_INFO {
                 conn_handle.add_diag_info(ODBCError::OutStringTruncated(buffer_len));
@@ -2349,7 +2352,7 @@ unsafe fn sql_get_infow_helper(
         _ => {
             err = Some(ODBCError::UnsupportedConnectionAttribute(
                 (info_type as usize).to_string()));
-            SqlReturn::ERROR
+            SqlReturn::SUCCESS_WITH_INFO
         }
     };
     if let Some(error) = err {
