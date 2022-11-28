@@ -7,11 +7,11 @@ use chrono::{
     offset::{TimeZone, Utc},
     DateTime, Datelike, Timelike,
 };
+use file_dbg_macros::file_dbg;
 use mongo_odbc_core::util::Decimal128Plus;
 use odbc_sys::{CDataType, Date, Len, Pointer, Time, Timestamp, USmallInt};
 use odbc_sys::{Char, Integer, SmallInt, SqlReturn, WChar};
 use std::{cmp::min, collections::HashMap, mem::size_of, ptr::copy_nonoverlapping, str::FromStr};
-use file_dbg_macros::file_dbg;
 
 const BINARY: &str = "Binary";
 const DOUBLE: &str = "Double";
@@ -860,13 +860,13 @@ pub unsafe fn input_wtext_to_string(text: *const WChar, len: usize) -> String {
     dst.set_len(len);
     file_dbg!(format!("Size of Wchar = {}", size_of::<WChar>()));
     file_dbg!(format!("dst.len = {}", dst.len()));
-    let dest_ptr= dst.as_mut_ptr();
+    let dest_ptr = dst.as_mut_ptr();
     file_dbg!(format!("dest_ptr = {}", dest_ptr as u64));
     file_dbg!(format!("text_ptr = {}", text as u64));
     copy_nonoverlapping(text, dst.as_mut_ptr(), len);
     let ret = String::from_utf16_lossy(&dst);
     file_dbg!(format!("ret = {}", ret));
-    return  ret;
+    return ret;
 }
 
 ///
@@ -986,8 +986,8 @@ unsafe fn set_output_binary_helper(
 }
 
 pub mod i16_len {
-    use file_dbg_macros::file_dbg;
     use super::*;
+    use file_dbg_macros::file_dbg;
     ///
     /// set_output_wstring writes [`message`] to the *WChar [`output_ptr`]. [`buffer_len`] is the
     /// length of the [`output_ptr`] buffer in characters; the message should be truncated
@@ -1007,8 +1007,9 @@ pub mod i16_len {
         file_dbg!(message);
         let message = message.encode_utf16().collect::<Vec<u16>>();
         let (len, ret) = set_output_wstring_helper(&message, output_ptr, buffer_len);
-        *text_length_ptr = len as SmallInt;
-        let output_msg = &(String::from_utf16_lossy( & * (output_ptr as * const [u16; 400])))[0..*text_length_ptr as usize];
+        *text_length_ptr = (len * 2) as SmallInt;
+        let output_msg = &(String::from_utf16_lossy(&*(output_ptr as *const [u16; 400])))
+            [0..*text_length_ptr as usize];
         file_dbg!(format!("set_output_wstring : {}", output_msg));
         file_dbg!(format!("text_length : {}", *text_length_ptr));
         file_dbg!("<<<< set_output_wstring");

@@ -105,7 +105,9 @@ macro_rules! panic_safe_exec {
         panic::set_hook(previous_hook);
         match result {
             Ok(sql_return) => {
-                file_dbg!(print_outcome(function_name!(), &sql_return));
+                let trace = trace_call_and_outcome(function_name!(), &sql_return);
+                file_dbg!(&trace);
+                println!("{}", &trace);
                 return sql_return;
             }
             Err(err) => {
@@ -131,19 +133,19 @@ macro_rules! unimpl {
 
 // Verifies that the expected SQL State, message text, and native error in the handle match
 // the expected input
-pub fn print_outcome(function_name: &str, sql_return: &SqlReturn) {
-    let outcome = match sql_return {
-        &SqlReturn::SUCCESS => "SUCCESS",
-        &SqlReturn::ERROR => "ERROR",
-        &SqlReturn::SUCCESS_WITH_INFO => "SUCCESS_WITH_INFO",
-        &SqlReturn::INVALID_HANDLE => "INVALID_HANDLE",
-        &SqlReturn::NEED_DATA => "NEED_DATA",
-        &SqlReturn::NO_DATA => "NO_DATA",
-        &SqlReturn::PARAM_DATA_AVAILABLE => "PARAM_DATA_AVAILABLE",
-        &SqlReturn::STILL_EXECUTING => "STILL_EXECUTING",
+pub fn trace_call_and_outcome(function_name: &str, sql_return: &SqlReturn) -> String {
+    let outcome = match *sql_return {
+        SqlReturn::SUCCESS => "SUCCESS",
+        SqlReturn::ERROR => "ERROR",
+        SqlReturn::SUCCESS_WITH_INFO => "SUCCESS_WITH_INFO",
+        SqlReturn::INVALID_HANDLE => "INVALID_HANDLE",
+        SqlReturn::NEED_DATA => "NEED_DATA",
+        SqlReturn::NO_DATA => "NO_DATA",
+        SqlReturn::PARAM_DATA_AVAILABLE => "PARAM_DATA_AVAILABLE",
+        SqlReturn::STILL_EXECUTING => "STILL_EXECUTING",
         _ => "unknown sql_return",
     };
-    println!("{} SQLReturn = {}", function_name, outcome);
+    format!("{} SQLReturn = {}", function_name, outcome).to_string()
 }
 
 ///
