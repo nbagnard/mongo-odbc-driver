@@ -1,9 +1,9 @@
 use constants::{
     FRACTIONAL_TRUNCATION, GENERAL_ERROR, INDICATOR_VARIABLE_REQUIRED, INTEGRAL_TRUNCATION,
     INVALID_ATTR_VALUE, INVALID_CHARACTER_VALUE, INVALID_CURSOR_STATE, INVALID_DATETIME_FORMAT,
-    INVALID_DESCRIPTOR_INDEX, NOT_IMPLEMENTED, NO_DSN_OR_DRIVER, OPTION_CHANGED,
-    RESTRICTED_DATATYPE, RIGHT_TRUNCATED, UNABLE_TO_CONNECT, UNSUPPORTED_FIELD_DESCRIPTOR,
-    VENDOR_IDENTIFIER,
+    INVALID_DESCRIPTOR_INDEX, INVALID_INFO_TYPE_FOR_ODBC_VER, NOT_IMPLEMENTED, NO_DSN_OR_DRIVER,
+    OPTION_CHANGED, RESTRICTED_DATATYPE, RIGHT_TRUNCATED, UNABLE_TO_CONNECT,
+    UNSUPPORTED_FIELD_DESCRIPTOR, VENDOR_IDENTIFIER,
 };
 use thiserror::Error;
 
@@ -28,9 +28,11 @@ pub enum ODBCError {
     )]
     UnsupportedConnectionAttribute(String),
     #[error(
-        "[{}][API] The field descriptor value {0} is not supported",
+        "[{}][API] The connection attribute {0} is not supported",
         VENDOR_IDENTIFIER
     )]
+    UnsupportedInfoType(String),
+    #[error("[{}][API] The infoType {0} is not supported", VENDOR_IDENTIFIER)]
     UnsupportedFieldDescriptor(String),
     #[error(
         "[{}][API] Indicator variable was null when null data was accessed",
@@ -97,6 +99,7 @@ impl ODBCError {
             | ODBCError::UnimplementedDataType(_)
             | ODBCError::UnsupportedDriverConnectOption(_)
             | ODBCError::UnsupportedConnectionAttribute(_) => NOT_IMPLEMENTED,
+            ODBCError::UnsupportedInfoType(_) => INVALID_INFO_TYPE_FOR_ODBC_VER,
             ODBCError::General(_) | ODBCError::Panic(_) => GENERAL_ERROR,
             ODBCError::Core(c) => c.get_sql_state(),
             ODBCError::InvalidUriFormat(_) => UNABLE_TO_CONNECT,
@@ -134,6 +137,7 @@ impl ODBCError {
             | ODBCError::OutStringTruncated(_)
             | ODBCError::UnsupportedDriverConnectOption(_)
             | ODBCError::UnsupportedConnectionAttribute(_)
+            | ODBCError::UnsupportedInfoType(_)
             | ODBCError::OptionValueChanged(_, _)
             | ODBCError::InvalidDescriptorIndex(_)
             | ODBCError::RestrictedDataType(_, _)

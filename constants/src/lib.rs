@@ -19,6 +19,7 @@ pub const INDICATOR_VARIABLE_REQUIRED: &str = "22002";
 pub const INTEGRAL_TRUNCATION: &str = "22003";
 pub const INVALID_DATETIME_FORMAT: &str = "22007";
 pub const INVALID_CHARACTER_VALUE: &str = "22018";
+pub const INVALID_INFO_TYPE_FOR_ODBC_VER: &str = "HY096";
 
 pub const SQL_ALL_TABLE_TYPES: &str = "%";
 pub const SQL_ALL_CATALOGS: &str = "%";

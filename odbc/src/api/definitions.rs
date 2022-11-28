@@ -308,6 +308,7 @@ pub const SQL_OIC_CORE: u32 = 0x00000001;
 pub const SQL_SC_SQL92_ENTRY: u32 = 0x00000001;
 pub const SQL_INFO_Y: &str = "Y";
 pub const SQL_GB_GROUP_BY_CONTAINS_SELECT: u16 = 0x0002;
+pub const SQL_CB_PRESERVE: u16 = 2;
 
 // SQL_CONVERT_FUNCTIONS bitmask
 pub const SQL_FN_CVT_CAST: u32 = 0x00000002;
