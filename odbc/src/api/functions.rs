@@ -1807,7 +1807,7 @@ pub unsafe extern "C" fn SQLGetDiagRecW(
                         text_length_ptr,
                         native_error_ptr,
                     ),
-                    None => SqlReturn::SUCCESS,
+                    None => SqlReturn::NO_DATA,
                 }
             };
 
