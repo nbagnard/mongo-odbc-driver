@@ -11,7 +11,6 @@ use crate::{
     },
     handles::definitions::*,
 };
-
 use ::function_name::named;
 use bson::Bson;
 use constants::{SQL_ALL_CATALOGS, SQL_ALL_SCHEMAS, SQL_ALL_TABLE_TYPES};
@@ -33,6 +32,23 @@ const NULL_HANDLE_ERROR: &str = "handle cannot be null";
 const HANDLE_MUST_BE_ENV_ERROR: &str = "handle must be env";
 const HANDLE_MUST_BE_CONN_ERROR: &str = "handle must be conn";
 const HANDLE_MUST_BE_STMT_ERROR: &str = "handle must be stmt";
+
+// Verifies that the expected SQL State, message text, and native error in the handle match
+// the expected input
+pub fn trace_call_and_outcome(function_name: &str, sql_return: &SqlReturn) -> String {
+    let outcome = match *sql_return {
+        SqlReturn::SUCCESS => "SUCCESS",
+        SqlReturn::ERROR => "ERROR",
+        SqlReturn::SUCCESS_WITH_INFO => "SUCCESS_WITH_INFO",
+        SqlReturn::INVALID_HANDLE => "INVALID_HANDLE",
+        SqlReturn::NEED_DATA => "NEED_DATA",
+        SqlReturn::NO_DATA => "NO_DATA",
+        SqlReturn::PARAM_DATA_AVAILABLE => "PARAM_DATA_AVAILABLE",
+        SqlReturn::STILL_EXECUTING => "STILL_EXECUTING",
+        _ => "unknown sql_return",
+    };
+    format!("{} SQLReturn = {}", function_name, outcome)
+}
 
 macro_rules! must_be_valid {
     ($maybe_handle:expr) => {{
@@ -130,23 +146,6 @@ macro_rules! unimpl {
     }};
 }
 
-// Verifies that the expected SQL State, message text, and native error in the handle match
-// the expected input
-pub fn trace_call_and_outcome(function_name: &str, sql_return: &SqlReturn) -> String {
-    let outcome = match *sql_return {
-        SqlReturn::SUCCESS => "SUCCESS",
-        SqlReturn::ERROR => "ERROR",
-        SqlReturn::SUCCESS_WITH_INFO => "SUCCESS_WITH_INFO",
-        SqlReturn::INVALID_HANDLE => "INVALID_HANDLE",
-        SqlReturn::NEED_DATA => "NEED_DATA",
-        SqlReturn::NO_DATA => "NO_DATA",
-        SqlReturn::PARAM_DATA_AVAILABLE => "PARAM_DATA_AVAILABLE",
-        SqlReturn::STILL_EXECUTING => "STILL_EXECUTING",
-        _ => "unknown sql_return",
-    };
-    format!("{} SQLReturn = {}", function_name, outcome).to_string()
-}
-
 ///
 /// [`SQLAllocHandle`]: https://learn.microsoft.com/en-us/sql/odbc/reference/syntax/SQLAllocHandle-function
 ///
@@ -155,7 +154,6 @@ pub fn trace_call_and_outcome(function_name: &str, sql_return: &SqlReturn) -> St
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLAllocHandle(
     handle_type: HandleType,
     input_handle: Handle,
@@ -163,6 +161,8 @@ pub unsafe extern "C" fn SQLAllocHandle(
 ) -> SqlReturn {
     panic_safe_exec!(
         || {
+            let sql_ret = SqlReturn::ERROR;
+            trace_call_and_outcome("toto", &sql_ret);
             match sql_alloc_handle(handle_type, input_handle as *mut _, output_handle) {
                 Ok(_) => SqlReturn::SUCCESS,
                 Err(_) => SqlReturn::INVALID_HANDLE,
@@ -238,7 +238,6 @@ fn sql_alloc_handle(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLBindCol(
     hstmt: HStmt,
     _col_number: USmallInt,
@@ -257,7 +256,6 @@ pub unsafe extern "C" fn SQLBindCol(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLBindParameter(
     hstmt: HStmt,
@@ -282,7 +280,6 @@ pub unsafe extern "C" fn SQLBindParameter(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLBrowseConnect(
     connection_handle: HDbc,
     _in_connection_string: *const Char,
@@ -304,7 +301,6 @@ pub unsafe extern "C" fn SQLBrowseConnect(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLBrowseConnectW(
     connection_handle: HDbc,
     _in_connection_string: *const WChar,
@@ -324,7 +320,6 @@ pub unsafe extern "C" fn SQLBrowseConnectW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLBulkOperations(
     statement_handle: HStmt,
     _operation: BulkOperation,
@@ -340,7 +335,6 @@ pub unsafe extern "C" fn SQLBulkOperations(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLCancel(statement_handle: HStmt) -> SqlReturn {
     unimpl!(statement_handle);
 }
@@ -352,7 +346,6 @@ pub unsafe extern "C" fn SQLCancel(statement_handle: HStmt) -> SqlReturn {
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLCancelHandle(_handle_type: HandleType, handle: Handle) -> SqlReturn {
     unimpl!(handle);
@@ -366,7 +359,6 @@ pub unsafe extern "C" fn SQLCancelHandle(_handle_type: HandleType, handle: Handl
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLCloseCursor(_statement_handle: HStmt) -> SqlReturn {
     // We never need to do anything to close a cusor, so this is safe.
     SqlReturn::SUCCESS
@@ -379,7 +371,6 @@ pub unsafe extern "C" fn SQLCloseCursor(_statement_handle: HStmt) -> SqlReturn {
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLColAttribute(
     statement_handle: HStmt,
@@ -402,7 +393,6 @@ pub unsafe extern "C" fn SQLColAttribute(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLColAttributeW(
     statement_handle: HStmt,
@@ -555,7 +545,6 @@ pub unsafe extern "C" fn SQLColAttributeW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLColumnPrivileges(
     statement_handle: HStmt,
     _catalog_name: *const Char,
@@ -583,7 +572,6 @@ pub unsafe extern "C" fn SQLColumnPrivileges(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLColumnPrivilegesW(
     statement_handle: HStmt,
     _catalog_name: *const WChar,
@@ -605,7 +593,6 @@ pub unsafe extern "C" fn SQLColumnPrivilegesW(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLColumns(
     statement_handle: HStmt,
@@ -631,7 +618,6 @@ pub unsafe extern "C" fn SQLColumns(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLColumnsW(
     statement_handle: HStmt,
     _catalog_name: *const WChar,
@@ -654,7 +640,6 @@ pub unsafe extern "C" fn SQLColumnsW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLCompleteAsync(
     _handle_type: HandleType,
     handle: Handle,
@@ -670,7 +655,6 @@ pub unsafe extern "C" fn SQLCompleteAsync(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLConnect(
     connection_handle: HDbc,
@@ -694,7 +678,6 @@ pub unsafe extern "C" fn SQLConnect(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLConnectW(
     connection_handle: HDbc,
     _server_name: *const WChar,
@@ -715,7 +698,6 @@ pub unsafe extern "C" fn SQLConnectW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLCopyDesc(
     _source_desc_handle: HDesc,
     _target_desc_handle: HDesc,
@@ -730,7 +712,6 @@ pub unsafe extern "C" fn SQLCopyDesc(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLDataSources(
     environment_handle: HEnv,
@@ -755,7 +736,6 @@ pub unsafe extern "C" fn SQLDataSources(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLDataSourcesW(
     environment_handle: HEnv,
     _direction: FetchOrientation,
@@ -776,7 +756,6 @@ pub unsafe extern "C" fn SQLDataSourcesW(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLDescribeCol(
     hstmt: HStmt,
@@ -801,7 +780,6 @@ pub unsafe extern "C" fn SQLDescribeCol(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLDescribeColW(
     hstmt: HStmt,
@@ -854,7 +832,6 @@ pub unsafe extern "C" fn SQLDescribeColW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLDescribeParam(
     statement_handle: HStmt,
     _parameter_number: USmallInt,
@@ -873,7 +850,6 @@ pub unsafe extern "C" fn SQLDescribeParam(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLDisconnect(connection_handle: HDbc) -> SqlReturn {
     panic_safe_exec!(
@@ -925,7 +901,6 @@ fn sql_driver_connect(conn: &Connection, odbc_uri_string: &str) -> Result<MongoC
 /// Because this is a C-infereface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLDriverConnect(
     connection_handle: HDbc,
@@ -980,7 +955,6 @@ pub unsafe extern "C" fn SQLDriverConnect(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLDriverConnectW(
     connection_handle: HDbc,
     _window_handle: HWnd,
@@ -1032,7 +1006,6 @@ pub unsafe extern "C" fn SQLDriverConnectW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLDrivers(
     henv: HEnv,
     _direction: FetchOrientation,
@@ -1056,7 +1029,6 @@ pub unsafe extern "C" fn SQLDrivers(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLDriversW(
     henv: HEnv,
     _direction: FetchOrientation,
@@ -1078,7 +1050,6 @@ pub unsafe extern "C" fn SQLDriversW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLEndTran(
     _handle_type: HandleType,
     handle: Handle,
@@ -1094,7 +1065,6 @@ pub unsafe extern "C" fn SQLEndTran(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLExecDirect(
     statement_handle: HStmt,
@@ -1138,7 +1108,6 @@ pub unsafe extern "C" fn SQLExecDirect(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLExecDirectW(
     statement_handle: HStmt,
     statement_text: *const WChar,
@@ -1178,7 +1147,6 @@ pub unsafe extern "C" fn SQLExecDirectW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLExecute(statement_handle: HStmt) -> SqlReturn {
     unsupported_function(MongoHandleRef::from(statement_handle), "SQLExecute")
 }
@@ -1190,7 +1158,6 @@ pub unsafe extern "C" fn SQLExecute(statement_handle: HStmt) -> SqlReturn {
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLFetch(statement_handle: HStmt) -> SqlReturn {
     panic_safe_exec!(
@@ -1243,7 +1210,6 @@ pub unsafe extern "C" fn SQLFetch(statement_handle: HStmt) -> SqlReturn {
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLFetchScroll(
     statement_handle: HStmt,
     _fetch_orientation: FetchOrientation,
@@ -1259,7 +1225,6 @@ pub unsafe extern "C" fn SQLFetchScroll(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLForeignKeys(
     statement_handle: HStmt,
@@ -1289,7 +1254,6 @@ pub unsafe extern "C" fn SQLForeignKeys(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLForeignKeysW(
     statement_handle: HStmt,
     _pk_catalog_name: *const WChar,
@@ -1315,7 +1279,6 @@ pub unsafe extern "C" fn SQLForeignKeysW(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLFreeHandle(handle_type: HandleType, handle: Handle) -> SqlReturn {
     panic_safe_exec!(
@@ -1394,7 +1357,6 @@ fn sql_free_handle(handle_type: HandleType, handle: *mut MongoHandle) -> Result<
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLFreeStmt(statement_handle: HStmt, _option: SmallInt) -> SqlReturn {
     panic_safe_exec!(
         || {
@@ -1411,7 +1373,6 @@ pub unsafe extern "C" fn SQLFreeStmt(statement_handle: HStmt, _option: SmallInt)
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLGetConnectAttr(
     connection_handle: HDbc,
@@ -1432,7 +1393,6 @@ pub unsafe extern "C" fn SQLGetConnectAttr(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLGetConnectAttrW(
     connection_handle: HDbc,
@@ -1504,7 +1464,6 @@ pub unsafe extern "C" fn SQLGetConnectAttrW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLGetCursorName(
     statement_handle: HStmt,
     _cursor_name: *mut Char,
@@ -1524,7 +1483,6 @@ pub unsafe extern "C" fn SQLGetCursorName(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLGetCursorNameW(
     statement_handle: HStmt,
     _cursor_name: *mut WChar,
@@ -1541,7 +1499,6 @@ pub unsafe extern "C" fn SQLGetCursorNameW(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLGetData(
     statement_handle: HStmt,
@@ -1619,7 +1576,6 @@ pub unsafe extern "C" fn SQLGetData(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLGetDescField(
     _descriptor_handle: HDesc,
     _record_number: SmallInt,
@@ -1641,7 +1597,6 @@ pub unsafe extern "C" fn SQLGetDescField(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLGetDescFieldW(
     _descriptor_handle: HDesc,
     _record_number: SmallInt,
@@ -1660,7 +1615,6 @@ pub unsafe extern "C" fn SQLGetDescFieldW(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLGetDescRec(
     _descriptor_handle: HDesc,
@@ -1688,7 +1642,6 @@ pub unsafe extern "C" fn SQLGetDescRec(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLGetDescRecW(
     _descriptor_handle: HDesc,
     _record_number: SmallInt,
@@ -1713,7 +1666,6 @@ pub unsafe extern "C" fn SQLGetDescRecW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLGetDiagField(
     _handle_type: HandleType,
     handle: Handle,
@@ -1736,7 +1688,6 @@ pub unsafe extern "C" fn SQLGetDiagField(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLGetDiagFieldW(
     _handle_type: HandleType,
     handle: Handle,
@@ -1756,7 +1707,6 @@ pub unsafe extern "C" fn SQLGetDiagFieldW(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLGetDiagRec(
     _handle_type: HandleType,
@@ -1780,7 +1730,6 @@ pub unsafe extern "C" fn SQLGetDiagRec(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLGetDiagRecW(
     handle_type: HandleType,
@@ -1843,7 +1792,6 @@ pub unsafe extern "C" fn SQLGetDiagRecW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLGetEnvAttr(
     environment_handle: HEnv,
     _attribute: EnvironmentAttribute,
@@ -1863,7 +1811,6 @@ pub unsafe extern "C" fn SQLGetEnvAttr(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLGetEnvAttrW(
     environment_handle: HEnv,
@@ -1911,7 +1858,6 @@ pub unsafe extern "C" fn SQLGetEnvAttrW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLGetInfo(
     connection_handle: HDbc,
     _info_type: USmallInt,
@@ -1931,7 +1877,6 @@ pub unsafe extern "C" fn SQLGetInfo(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLGetInfoW(
     connection_handle: HDbc,
@@ -2383,7 +2328,6 @@ unsafe fn sql_get_infow_helper(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLGetStmtAttr(
     handle: HStmt,
     _attribute: StatementAttribute,
@@ -2403,7 +2347,6 @@ pub unsafe extern "C" fn SQLGetStmtAttr(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLGetStmtAttrW(
     handle: HStmt,
@@ -2558,7 +2501,6 @@ pub unsafe extern "C" fn SQLGetStmtAttrW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLGetTypeInfo(handle: HStmt, _data_type: SqlDataType) -> SqlReturn {
     unimpl!(handle);
 }
@@ -2570,7 +2512,6 @@ pub unsafe extern "C" fn SQLGetTypeInfo(handle: HStmt, _data_type: SqlDataType) 
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLMoreResults(_handle: HStmt) -> SqlReturn {
     // For now, we never allow more than one result from a query (i.e., we only support one query
@@ -2585,7 +2526,6 @@ pub unsafe extern "C" fn SQLMoreResults(_handle: HStmt) -> SqlReturn {
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLNativeSql(
     connection_handle: HDbc,
@@ -2608,7 +2548,6 @@ pub unsafe extern "C" fn SQLNativeSql(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLNativeSqlW(
     connection_handle: HDbc,
     _in_statement_text: *const WChar,
@@ -2628,7 +2567,6 @@ pub unsafe extern "C" fn SQLNativeSqlW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLNumParams(
     statement_handle: HStmt,
     _param_count_ptr: *mut SmallInt,
@@ -2643,7 +2581,6 @@ pub unsafe extern "C" fn SQLNumParams(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLNumResultCols(
     statement_handle: HStmt,
@@ -2679,7 +2616,6 @@ pub unsafe extern "C" fn SQLNumResultCols(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLParamData(hstmt: HStmt, _value_ptr_ptr: *mut Pointer) -> SqlReturn {
     unsupported_function(MongoHandleRef::from(hstmt), "SQLParamData")
 }
@@ -2691,7 +2627,6 @@ pub unsafe extern "C" fn SQLParamData(hstmt: HStmt, _value_ptr_ptr: *mut Pointer
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLPrepare(
     hstmt: HStmt,
@@ -2711,7 +2646,6 @@ pub unsafe extern "C" fn SQLPrepare(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLPrepareW(
     hstmt: HStmt,
     _statement_text: *const WChar,
@@ -2727,7 +2661,6 @@ pub unsafe extern "C" fn SQLPrepareW(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLPrimaryKeys(
     statement_handle: HStmt,
@@ -2751,7 +2684,6 @@ pub unsafe extern "C" fn SQLPrimaryKeys(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLPrimaryKeysW(
     statement_handle: HStmt,
     _catalog_name: *const WChar,
@@ -2771,7 +2703,6 @@ pub unsafe extern "C" fn SQLPrimaryKeysW(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLProcedureColumns(
     statement_handle: HStmt,
@@ -2800,7 +2731,6 @@ pub unsafe extern "C" fn SQLProcedureColumns(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLProcedureColumnsW(
     statement_handle: HStmt,
     _catalog_name: *const WChar,
@@ -2826,7 +2756,6 @@ pub unsafe extern "C" fn SQLProcedureColumnsW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLProcedures(
     statement_handle: HStmt,
     _catalog_name: *const Char,
@@ -2849,7 +2778,6 @@ pub unsafe extern "C" fn SQLProcedures(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLProceduresW(
     statement_handle: HStmt,
     _catalog_name: *const WChar,
@@ -2870,7 +2798,6 @@ pub unsafe extern "C" fn SQLProceduresW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLPutData(
     statement_handle: HStmt,
     _data_ptr: Pointer,
@@ -2886,7 +2813,6 @@ pub unsafe extern "C" fn SQLPutData(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLRowCount(
     statement_handle: HStmt,
@@ -2913,7 +2839,6 @@ pub unsafe extern "C" fn SQLRowCount(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLSetConnectAttr(
     connection_handle: HDbc,
     _attribute: ConnectionAttribute,
@@ -2932,7 +2857,6 @@ pub unsafe extern "C" fn SQLSetConnectAttr(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLSetConnectAttrW(
     connection_handle: HDbc,
@@ -2982,7 +2906,6 @@ pub unsafe extern "C" fn SQLSetConnectAttrW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLSetCursorName(
     statement_handle: HStmt,
     _cursor_name: *const Char,
@@ -3001,7 +2924,6 @@ pub unsafe extern "C" fn SQLSetCursorName(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLSetCursorNameW(
     statement_handle: HStmt,
     _cursor_name: *const WChar,
@@ -3017,7 +2939,6 @@ pub unsafe extern "C" fn SQLSetCursorNameW(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLSetDescField(
     _desc_handle: HDesc,
@@ -3036,7 +2957,6 @@ pub unsafe extern "C" fn SQLSetDescField(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLSetDescRec(
     _desc_handle: HDesc,
@@ -3061,7 +2981,6 @@ pub unsafe extern "C" fn SQLSetDescRec(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLSetPos(
     statement_handle: HStmt,
     _row_number: ULen,
@@ -3078,7 +2997,6 @@ pub unsafe extern "C" fn SQLSetPos(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLSetEnvAttr(
     environment_handle: HEnv,
@@ -3098,7 +3016,6 @@ pub unsafe extern "C" fn SQLSetEnvAttr(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLSetEnvAttrW(
     environment_handle: HEnv,
@@ -3166,7 +3083,6 @@ pub unsafe extern "C" fn SQLSetEnvAttrW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLSetStmtAttr(
     hstmt: HStmt,
     _attr: StatementAttribute,
@@ -3185,7 +3101,6 @@ pub unsafe extern "C" fn SQLSetStmtAttr(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLSetStmtAttrW(
     hstmt: HStmt,
@@ -3406,7 +3321,6 @@ pub unsafe extern "C" fn SQLSetStmtAttrW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLSpecialColumns(
     statement_handle: HStmt,
     _identifier_type: SmallInt,
@@ -3432,7 +3346,6 @@ pub unsafe extern "C" fn SQLSpecialColumns(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLSpecialColumnsW(
     statement_handle: HStmt,
     _identifier_type: SmallInt,
@@ -3456,7 +3369,6 @@ pub unsafe extern "C" fn SQLSpecialColumnsW(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLStatistics(
     statement_handle: HStmt,
     _catalog_name: *const Char,
@@ -3478,7 +3390,6 @@ pub unsafe extern "C" fn SQLStatistics(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLTablePrivileges(
     statement_handle: HStmt,
@@ -3502,7 +3413,6 @@ pub unsafe extern "C" fn SQLTablePrivileges(
 ///
 #[no_mangle]
 #[named]
-#[named]
 pub unsafe extern "C" fn SQLTablesPrivilegesW(
     statement_handle: HStmt,
     _catalog_name: *const WChar,
@@ -3522,7 +3432,6 @@ pub unsafe extern "C" fn SQLTablesPrivilegesW(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLTables(
     statement_handle: HStmt,
@@ -3572,7 +3481,6 @@ fn sql_tables(
 /// Because this is a C-interface, this is necessarily unsafe
 ///
 #[no_mangle]
-#[named]
 #[named]
 pub unsafe extern "C" fn SQLTablesW(
     statement_handle: HStmt,
