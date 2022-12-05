@@ -161,7 +161,6 @@ pub unsafe extern "C" fn SQLAllocHandle(
 ) -> SqlReturn {
     panic_safe_exec!(
         || {
-            let sql_ret = SqlReturn::ERROR;
             match sql_alloc_handle(handle_type, input_handle as *mut _, output_handle) {
                 Ok(_) => SqlReturn::SUCCESS,
                 Err(_) => SqlReturn::INVALID_HANDLE,
@@ -687,6 +686,27 @@ pub unsafe extern "C" fn SQLConnectW(
     _name_length_3: SmallInt,
 ) -> SqlReturn {
     unsupported_function(MongoHandleRef::from(connection_handle), "SQLConnectW")
+    /*
+        panic_safe_exec!(
+        || {
+            let conn_handle = MongoHandleRef::from(connection_handle);
+            let conn = must_be_valid!((*conn_handle).as_connection());
+            let uid = input_wtext_to_string(_user_name, _name_length_2 as usize);
+            let pwd = input_wtext_to_string(_authentication, _name_length_3 as usize);
+            let odbc_uri_string = format!("DRIVER=ADRIVER;PWD={};USER={};SERVER=localhost;AUTH_SRC=admin;DATABASE=integration_test", pwd, uid);
+            let mongo_connection_res = sql_driver_connect(conn, &odbc_uri_string);
+            if let Err(error) = mongo_connection_res {
+                conn_handle.add_diag_info(error.into());
+                return SqlReturn::ERROR;
+            }
+            let mongo_connection = mongo_connection_res.unwrap();
+            conn.write().unwrap().mongo_connection = Some(mongo_connection);
+
+            SqlReturn::SUCCESS
+        },
+        connection_handle
+    );
+     */
 }
 
 ///

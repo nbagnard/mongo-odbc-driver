@@ -1,23 +1,26 @@
 mod common;
 
 mod integration {
+    use crate::common::{power_bi_connect, setup};
+    use odbc::ffi::SQL_NTS;
     use odbc_sys::{
-        HDbc, HEnv, Handle, HandleType, InfoType, Pointer, SQLFreeHandle, SQLGetInfoW, SmallInt,
-        SqlReturn,
+        HDbc, HEnv, HStmt, Handle, HandleType, InfoType, Integer, Pointer, SQLAllocHandle,
+        SQLExecDirectW, SQLFreeHandle, SQLGetInfoW, SmallInt, SqlReturn,
     };
+    use std::ptr::null_mut;
     use std::slice;
 
     /// Test PowerBI Setup flow
     #[test]
     fn test_setup() {
-        crate::common::setup();
+        setup();
     }
 
     /// Test PowerBi environment clean-up
     #[test]
     fn test_env_cleanup() {
         // We need a handle to be able to test that freeing the handle work
-        let env_handle: HEnv = crate::common::setup();
+        let env_handle: HEnv = setup();
 
         unsafe {
             // Verify that freeing the handle is working as expected
@@ -38,9 +41,9 @@ mod integration {
     /// - SQLGetInfoW(SQL_DBMS_VER)
     #[test]
     fn test_connection() {
-        let env_handle: HEnv = crate::common::setup();
+        let env_handle: HEnv = setup();
         let (conn_handle, in_connection_string, out_connection_string, output_len) =
-            crate::common::power_bi_connect(env_handle);
+            power_bi_connect(env_handle);
 
         unsafe {
             let input_len = in_connection_string.len() as SmallInt;
@@ -110,6 +113,33 @@ mod integration {
                     *str_len_ptr as usize
                 )),
                 *str_len_ptr
+            );
+        }
+    }
+
+    #[test]
+    fn test_sqldriverconnect_alloc_stmt_exec_direct() {
+        let env_handle: HEnv = setup();
+        let (conn_handle, _in_connection_string, _out_connection_string, _output_len) =
+            power_bi_connect(env_handle);
+        let mut stmt_handle: Handle = null_mut();
+        unsafe {
+            assert_eq!(
+                SqlReturn::SUCCESS,
+                SQLAllocHandle(
+                    HandleType::Stmt,
+                    conn_handle as *mut _,
+                    &mut stmt_handle as *mut Handle
+                )
+            );
+
+            let query: Vec<u16> = "SELECT * FROM example\0"
+                .to_string()
+                .encode_utf16()
+                .collect();
+            assert_eq!(
+                SqlReturn::SUCCESS,
+                SQLExecDirectW(stmt_handle as HStmt, query.as_ptr(), SQL_NTS as Integer)
             );
         }
     }
