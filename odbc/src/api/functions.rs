@@ -162,7 +162,6 @@ pub unsafe extern "C" fn SQLAllocHandle(
     panic_safe_exec!(
         || {
             let sql_ret = SqlReturn::ERROR;
-            trace_call_and_outcome("toto", &sql_ret);
             match sql_alloc_handle(handle_type, input_handle as *mut _, output_handle) {
                 Ok(_) => SqlReturn::SUCCESS,
                 Err(_) => SqlReturn::INVALID_HANDLE,
