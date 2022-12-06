@@ -1,7 +1,7 @@
 mod common;
 
 mod integration {
-    use crate::common::{power_bi_connect, setup};
+    use crate::common::{power_bi_connect, print_sql_diagnostics, setup};
     use odbc::ffi::SQL_NTS;
     use odbc_sys::{
         HDbc, HEnv, HStmt, Handle, HandleType, InfoType, Integer, Pointer, SQLAllocHandle,
@@ -139,7 +139,8 @@ mod integration {
                 .collect();
             assert_eq!(
                 SqlReturn::SUCCESS,
-                SQLExecDirectW(stmt_handle as HStmt, query.as_ptr(), SQL_NTS as Integer)
+                SQLExecDirectW(stmt_handle as HStmt, query.as_ptr(), SQL_NTS as Integer),
+                print_sql_diagnostics(HandleType::Stmt, stmt_handle as HStmt)
             );
         }
     }

@@ -2,7 +2,8 @@ use odbc::ffi::SQL_NTS;
 use odbc_sys::{
     AttrConnectionPooling, AttrOdbcVersion, ConnectionAttribute, DriverConnectOption,
     EnvironmentAttribute, HDbc, HEnv, Handle, HandleType, Pointer, SQLAllocHandle,
-    SQLDriverConnectW, SQLSetConnectAttrW, SQLSetEnvAttr, SmallInt, SqlReturn,
+    SQLDriverConnectW, SQLGetDiagRecW, SQLSetConnectAttrW, SQLSetEnvAttr, SmallInt, SqlReturn,
+    WChar,
 };
 use std::ptr::null_mut;
 use std::{env, slice};
@@ -149,4 +150,42 @@ pub fn power_bi_connect(env_handle: HEnv) -> (odbc_sys::HDbc, String, String, Sm
         out_connection_string,
         output_len,
     )
+}
+
+// Verifies that the expected SQL State, message text, and native error in the handle match
+// the expected input
+pub fn get_sql_diagnostics(handle_type: HandleType, handle: Handle) -> String {
+    let text_length_ptr = &mut 0;
+    let actual_sql_state = &mut [0u16; 6] as *mut _;
+    let actual_message_text = &mut [0u16; 512] as *mut _;
+    let actual_native_error = &mut 0;
+    unsafe {
+        let _ = SQLGetDiagRecW(
+            handle_type,
+            handle as *mut _,
+            1,
+            actual_sql_state,
+            actual_native_error,
+            actual_message_text,
+            1024,
+            text_length_ptr,
+        );
+    };
+    unsafe {
+        String::from_utf16_lossy(slice::from_raw_parts(
+            actual_message_text as *const WChar,
+            *text_length_ptr as usize,
+        ))
+    }
+}
+
+pub fn print_text(label: &str, txt_len: isize, text: *mut WChar) {
+    unsafe {
+        let str_val = String::from_utf16_lossy(slice::from_raw_parts(
+            text as *const WChar,
+            txt_len as usize,
+        ));
+
+        println!("{} = {}", label, str_val);
+    }
 }
