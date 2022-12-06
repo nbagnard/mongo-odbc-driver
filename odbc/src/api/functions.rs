@@ -930,6 +930,8 @@ pub unsafe extern "C" fn SQLDriverConnect(
     string_length_2: *mut SmallInt,
     driver_completion: DriverConnectOption,
 ) -> SqlReturn {
+    unsupported_function(MongoHandleRef::from(connection_handle), "SQLDriverConnectW")
+    /*
     panic_safe_exec!(
         || {
             let conn_handle = MongoHandleRef::from(connection_handle);
@@ -961,6 +963,7 @@ pub unsafe extern "C" fn SQLDriverConnect(
         },
         connection_handle
     );
+     */
 }
 
 ///
