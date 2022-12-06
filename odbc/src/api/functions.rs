@@ -685,9 +685,8 @@ pub unsafe extern "C" fn SQLConnectW(
     _authentication: *const WChar,
     _name_length_3: SmallInt,
 ) -> SqlReturn {
-    unsupported_function(MongoHandleRef::from(connection_handle), "SQLConnectW")
-    /*
-        panic_safe_exec!(
+    //unsupported_function(MongoHandleRef::from(connection_handle), "SQLConnectW")
+    panic_safe_exec!(
         || {
             let conn_handle = MongoHandleRef::from(connection_handle);
             let conn = must_be_valid!((*conn_handle).as_connection());
@@ -699,14 +698,14 @@ pub unsafe extern "C" fn SQLConnectW(
                 conn_handle.add_diag_info(error.into());
                 return SqlReturn::ERROR;
             }
-            let mongo_connection = mongo_connection_res.unwrap();
-            conn.write().unwrap().mongo_connection = Some(mongo_connection);
+            let mongo_connection =
+                odbc_unwrap!(sql_driver_connect(conn, &odbc_uri_string), conn_handle);
+            *conn.mongo_connection.write().unwrap() = Some(mongo_connection);
 
             SqlReturn::SUCCESS
         },
         connection_handle
     );
-     */
 }
 
 ///
