@@ -1000,14 +1000,18 @@ unsafe fn set_output_wstring_helper(
     output_ptr: *mut WChar,
     buffer_len: usize,
 ) -> (usize, SqlReturn) {
-    // If the output_ptr is null or no buffer space has been allocated, we need
-    // to return SUCCESS_WITH_INFO.
-    if output_ptr.is_null() || buffer_len == 0 {
-        return (0usize, SqlReturn::SUCCESS_WITH_INFO);
-    }
     // Check if the entire message plus a null terminator can fit in the buffer;
     // we should truncate the message if it's too long.
     let num_chars = min(message.len() + 1, buffer_len);
+
+    // If the output_ptr is null or no buffer space has been allocated, we need
+    // to return SUCCESS_WITH_INFO.
+    if output_ptr.is_null() || buffer_len == 0 {
+        // If output_ptr is NULL, we will still return the total number of characters
+        // (excluding the null-termination character for character data) available to return, but
+        // do not copy any data
+        return (message.len(), SqlReturn::SUCCESS_WITH_INFO);
+    }
     // TODO SQL-1084: This will currently not work when we need to truncate data that takes more than
     // two bytes, such as emojis because it's assuming every character is 2 bytes.
     // Actually, this is not clear now. The spec suggests it may be up to the user to correctly
