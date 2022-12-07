@@ -26,7 +26,6 @@ use odbc_sys::{
     Integer, Len, Nullability, ParamType, Pointer, RetCode, SmallInt, SqlDataType, SqlReturn,
     StatementAttribute, ULen, USmallInt, WChar,
 };
-use std::ptr::{null, null_mut};
 use std::{collections::HashMap, mem::size_of, panic, sync::mpsc};
 
 const NULL_HANDLE_ERROR: &str = "handle cannot be null";
@@ -2418,32 +2417,20 @@ pub unsafe extern "C" fn SQLGetStmtAttrW(
             set_str_length(string_length_ptr, size_of::<ULen>() as Integer);
             match attribute {
                 StatementAttribute::AppRowDesc => {
-                    /*
                     *(value_ptr as *mut Pointer) = stmt.attributes.read().unwrap().app_row_desc;
                     set_str_length(string_length_ptr, size_of::<Pointer>() as Integer);
-                    */
-                    *(value_ptr as *mut Pointer) = null_mut();
                 }
                 StatementAttribute::AppParamDesc => {
-                    /*
                     *(value_ptr as *mut Pointer) = stmt.attributes.read().unwrap().app_param_desc;
                     set_str_length(string_length_ptr, size_of::<Pointer>() as Integer);
-                    */
-                    *(value_ptr as *mut Pointer) = null_mut();
                 }
                 StatementAttribute::ImpRowDesc => {
-                    /*
                     *(value_ptr as *mut Pointer) = stmt.attributes.read().unwrap().imp_row_desc;
                     set_str_length(string_length_ptr, size_of::<Pointer>() as Integer);
-                     */
-                    *(value_ptr as *mut Pointer) = null_mut();
                 }
                 StatementAttribute::ImpParamDesc => {
-                    /*
                     *(value_ptr as *mut Pointer) = stmt.attributes.read().unwrap().imp_param_desc;
                     set_str_length(string_length_ptr, size_of::<Pointer>() as Integer);
-                     */
-                    *(value_ptr as *mut Pointer) = null_mut();
                 }
                 StatementAttribute::FetchBookmarkPtr => {
                     *(value_ptr as *mut _) = stmt.attributes.read().unwrap().fetch_bookmark_ptr;
