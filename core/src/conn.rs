@@ -52,15 +52,24 @@ impl MongoConnection {
         client_options.app_name = application_name
             .map(String::from)
             .or_else(|| Some(MONGODB_ODBC_DRIVER.to_string()));
+
+        if current_db.is_some() {
+            // If SQL_ATTR_CURRENT_CATALOG was not set, but there is a default DB provided in the
+            // URI, then we use this one
+            client_options.default_database = current_db.map(String::from);
+        }
+
         let client = Client::with_options(client_options)?;
         // run the "ping" command on the `auth_src` database. We assume this requires the
         // fewest permissions of anything we can do to verify a connection.
         client
             .database(auth_src)
             .run_command(doc! {"ping": 1}, None)?;
+
+        let curr_db = client.default_database().map(|val| val.name().to_string());
         Ok(MongoConnection {
             client,
-            current_db: current_db.map(String::from),
+            current_db: curr_db,
             operation_timeout: operation_timeout.map(|to| Duration::new(to as u64, 0)),
         })
     }
