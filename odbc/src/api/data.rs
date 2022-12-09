@@ -1270,7 +1270,8 @@ pub mod isize_len {
         let (len, ret) =
             set_output_wstring_helper(message.get(index..).unwrap(), output_ptr, buffer_len);
         // the returned length should always be the total length of the data.
-        *text_length_ptr = (message.len() - index) as Len;
+        // This is the length in bytes
+        *text_length_ptr = ((message.len() - index) * 2) as Len;
         stmt.insert_var_data_cache(col_num, CachedData::WChar(index + len, message));
         ret
     }
