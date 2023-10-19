@@ -2,7 +2,7 @@ mod common;
 
 mod integration {
 
-    use crate::common::{allocate_env, connect_with_conn_string};
+    use crate::common::{allocate_env, connect_with_conn_string, get_out_conn_str};
 
     #[test]
     fn test_invalid_connection() {
@@ -53,6 +53,17 @@ mod integration {
             "uuidRepresentation=pythonLegacy",
         );
         let _ = connect_with_conn_string(env_handle, conn_str).unwrap();
+        let _ = unsafe { Box::from_raw(env_handle) };
+    }
+
+    #[test]
+    fn connection_log_level() {
+        let env_handle = allocate_env().unwrap();
+        let conn_str = crate::common::generate_default_connection_str();
+        let out_connection_string = get_out_conn_str(env_handle, conn_str.clone()).unwrap();
+        assert_eq!(out_connection_string.contains("LogLevel"), false);
+        let out_connection_string = get_out_conn_str(env_handle, format!("{};LogLevel=DEBUG",conn_str)).unwrap();
+        assert!(out_connection_string.contains("LogLevel=DEBUG"));
         let _ = unsafe { Box::from_raw(env_handle) };
     }
 

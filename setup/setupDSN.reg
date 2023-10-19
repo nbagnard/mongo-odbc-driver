@@ -21,6 +21,7 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SOFTWARE\ODBC\ODBCINST.INI\MongoDB Atlas SQL ODBC Driver]
 "Driver"="%DRIVER_DLL_PATH%\\atsql.dll"
 "Setup"="%DRIVER_DLL_PATH%\\atsqls.dll"
+"LogLevel"="INFO"
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers]
 "MongoDB Atlas SQL ODBC Driver"="Installed"

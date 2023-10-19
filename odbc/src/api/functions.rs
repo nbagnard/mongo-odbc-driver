@@ -9,7 +9,6 @@ use crate::{
     },
     handles::definitions::*,
     trace_odbc,
-    util::get_driver_path,
 };
 use bson::Bson;
 use constants::{
@@ -34,6 +33,7 @@ use odbc_sys::{
 };
 use std::{cell::RefCell, ptr::null_mut};
 use std::{collections::HashMap, mem::size_of, panic, sync::mpsc};
+use std::ptr::null;
 
 const NULL_HANDLE_ERROR: &str = "handle cannot be null";
 const HANDLE_MUST_BE_ENV_ERROR: &str = "handle must be env";
@@ -188,6 +188,7 @@ macro_rules! panic_safe_exec_keep_diagnostics {
     }};
 }
 pub(crate) use panic_safe_exec_keep_diagnostics;
+use shared_sql_utils::{get_driver_log_level, get_driver_path};
 
 ///
 /// unsupported_function is a macro for correctly setting the state for unsupported functions.
@@ -256,10 +257,11 @@ fn sql_alloc_handle(
 ) -> Result<()> {
     match handle_type {
         HandleType::Env => {
-            let env = Env::with_state(
-                EnvState::Allocated,
-                RefCell::new(Logger::new(get_driver_path())),
-            );
+            // Read the driver path from odbcinst.
+            // If the MongoDB Atlas SQL ODBC Driver section is not found or no driver key exists,
+            // make this an empty string as this is what the Logger::new api expects
+            let driver_path = get_driver_path().unwrap_or(None).unwrap_or("".to_string());
+            let env = Env::with_state(EnvState::Allocated, RefCell::new(Logger::new(driver_path)));
             let mh = Box::new(MongoHandle::Env(env));
             unsafe {
                 *output_handle = Box::into_raw(mh) as *mut _;
@@ -871,7 +873,19 @@ fn sql_driver_connect(conn: &Connection, odbc_uri_string: &str) -> Result<MongoC
         .remove(&["driver", "dsn"])
         .ok_or(ODBCError::MissingDriverOrDSNProperty)?;
 
-    if let Some(log_level) = odbc_uri.remove(&["loglevel"]) {
+    // Retrieve the log level from the connection setting (DSN or DSN-less)
+    let mut log_level = odbc_uri.remove(&["loglevel"]);
+    eprintln!("Connection LogLevel = {log_level:?}");
+    // If there is no log level defined at the connection level,
+    // check if one is defined at driver level
+    if log_level.is_none() {
+        eprintln!("No connection log level defined. Getting driver log level");
+        log_level = get_driver_log_level()?;
+    }
+
+    eprintln!("Final log level = {log_level:?}");
+
+    if let Some(log_level) = log_level {
         let env = unsafe { conn.env.as_ref() };
         if let Some(env) = env {
             if let Some(env) = env.as_env() {

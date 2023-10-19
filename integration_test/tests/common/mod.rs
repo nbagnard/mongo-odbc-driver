@@ -199,6 +199,79 @@ pub fn connect_with_conn_string(env_handle: HEnv, in_connection_string: String) 
 }
 
 #[allow(dead_code)]
+/// Connects to database with provided connection string
+pub fn get_out_conn_str(env_handle: HEnv, in_connection_string: String) -> Result<String> {
+    let out_connection_string;
+    // Allocate a DBC handle
+    let mut dbc: Handle = null_mut();
+    unsafe {
+        match SQLAllocHandle(
+            HandleType::Dbc,
+            env_handle as *mut _,
+            &mut dbc as *mut Handle,
+        ) {
+            SqlReturn::SUCCESS => (),
+            sql_return => return Err(Error::HandleAllocation(sql_return_to_string(sql_return))),
+        }
+        let mut in_connection_string_encoded = cstr::to_widechar_vec(&in_connection_string);
+        in_connection_string_encoded.push(0);
+        let str_len_ptr = &mut 0;
+        #[allow(unused_mut)]
+        let mut output_len;
+        let mut out_connection_string_buff: [WideChar; BUFFER_LENGTH as usize - 1] =
+            [0; (BUFFER_LENGTH as usize - 1)];
+        let out_connection_string_buff = &mut out_connection_string_buff as *mut WideChar;
+
+
+        match SQLDriverConnectW(
+            dbc as HDbc,
+            null_mut(),
+            in_connection_string_encoded.as_ptr(),
+            NTS as SmallInt,
+            out_connection_string_buff,
+            BUFFER_LENGTH,
+            str_len_ptr,
+            DriverConnectOption::NoPrompt,
+        ) {
+            // Originally, this would return SUCCESS_WITH_INFO since we pass null_mut() as
+            // out_connection_string and 0 as buffer size. Now, this should always return SUCCESS.
+            SqlReturn::SUCCESS => (),
+            // TODO SQL-1568: Windows DM is still changing SUCCESS to SUCCESS_WITH_INFO
+            SqlReturn::SUCCESS_WITH_INFO => {
+                if !cfg!(windows) {
+                    return Err(Error::DriverConnect(
+                        sql_return_to_string(SqlReturn::SUCCESS_WITH_INFO),
+                        get_sql_diagnostics(HandleType::Dbc, dbc),
+                    ));
+                }
+            }
+            sql_return => {
+                return Err(Error::DriverConnect(
+                    sql_return_to_string(sql_return),
+                    get_sql_diagnostics(HandleType::Dbc, dbc),
+                ))
+            }
+        }
+
+        output_len = *str_len_ptr;
+        // The iodbc driver manager is multiplying the output length by size_of WideChar (u32)
+        // for some reason. It is correct when returned from SQLDriverConnectW, but is 4x
+        // bigger between return and here.
+        if odbc_sys::USING_IODBC {
+            output_len /= std::mem::size_of::<WideChar>() as i16;
+        }
+
+
+            out_connection_string = cstr::from_widechar_ref_lossy(slice::from_raw_parts(
+                out_connection_string_buff,
+                output_len as usize,
+            ));
+    }
+    let _ = unsafe { Box::from_raw(dbc) };
+    Ok(out_connection_string)
+}
+
+#[allow(dead_code)]
 /// Allocate statement from connection handle
 pub fn allocate_statement(dbc: HDbc) -> Result<HStmt> {
     let mut stmt: Handle = null_mut();

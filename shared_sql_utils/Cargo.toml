@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 cstr = { path = "../cstr" }
+constants = { path = "../constants" }
 thiserror = "1"

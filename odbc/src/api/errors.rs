@@ -6,6 +6,7 @@ use constants::{
     NO_DSN_OR_DRIVER, NO_RESULTSET, OPTION_CHANGED, PROGRAM_TYPE_OUT_OF_RANGE, RESTRICTED_DATATYPE,
     RIGHT_TRUNCATED, UNSUPPORTED_FIELD_DESCRIPTOR, VENDOR_IDENTIFIER,
 };
+use shared_sql_utils::odbcinst;
 use thiserror::Error;
 
 #[derive(Debug, Error, Clone)]
@@ -129,6 +130,8 @@ pub enum ODBCError {
     ConnectionNotOpen,
     #[error("[{}][Core] {0}", VENDOR_IDENTIFIER)]
     Core(mongo_odbc_core::Error),
+    #[error("[{}][Config] {0}", VENDOR_IDENTIFIER)]
+    SettingError(odbcinst::SettingError),
 }
 
 pub type Result<T> = std::result::Result<T, ODBCError>;
@@ -143,7 +146,9 @@ impl ODBCError {
             | ODBCError::UnsupportedConnectionAttribute(_)
             | ODBCError::UnsupportedStatementAttribute(_)
             | ODBCError::UnsupportedInfoTypeRetrieval(_) => NOT_IMPLEMENTED,
-            ODBCError::General(_) | ODBCError::Panic(_) => GENERAL_ERROR,
+            ODBCError::General(_) | ODBCError::Panic(_) | ODBCError::SettingError(_) => {
+                GENERAL_ERROR
+            }
             ODBCError::GeneralWarning(_) => GENERAL_WARNING,
             ODBCError::Core(c) => c.get_sql_state(),
             ODBCError::InvalidAttrValue(_) => INVALID_ATTR_VALUE,
@@ -209,7 +214,8 @@ impl ODBCError {
             | ODBCError::NoResultSet
             | ODBCError::UnsupportedInfoTypeRetrieval(_)
             | ODBCError::ConnectionNotOpen
-            | ODBCError::UnknownInfoType(_) => 0,
+            | ODBCError::UnknownInfoType(_)
+            | ODBCError::SettingError(_) => 0,
             ODBCError::Core(me) => me.code(),
         }
     }
@@ -230,5 +236,11 @@ impl From<&mongo_odbc_core::Error> for ODBCError {
             mongo_odbc_core::Error::ColIndexOutOfBounds(u) => ODBCError::InvalidDescriptorIndex(*u),
             e => ODBCError::Core(e.clone()),
         }
+    }
+}
+
+impl From<odbcinst::SettingError> for ODBCError {
+    fn from(err: odbcinst::SettingError) -> Self {
+        ODBCError::SettingError(err)
     }
 }

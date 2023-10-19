@@ -3,7 +3,7 @@ use cstr::{
     input_text_to_string_w, parse_attribute_string_a, parse_attribute_string_w, to_char_ptr,
     to_widechar_ptr,
 };
-use thiserror::Error;
+use std::fmt::Write;
 
 const DATABASE: &str = "database";
 const DSN: &str = "dsn";
@@ -13,26 +13,11 @@ const SERVER: &str = "server";
 const UID: &str = "uid";
 const URI: &str = "uri";
 const USER: &str = "user";
-const LOGLEVEL: &str = "loglevel";
+
 // SQL-1281
 // const LOGPATH: &str = "LOGPATH";
 
 const ODBCINI: &str = "ODBC.INI";
-// The maximum length of a registry value is 16383 characters.
-const MAX_VALUE_LENGTH: usize = 16383;
-
-#[derive(Error, Debug)]
-pub enum DsnError {
-    #[error("Invalid DSN: {}\nDSN may not be longer than 32 characters, and may not contain any of the following characters: [ ] {{ }} ( ) , ; ? * = ! @ \\", .0)]
-    Dsn(String),
-    #[error(
-        "The maximum length of an allowed registry value is {} characters.",
-        MAX_VALUE_LENGTH
-    )]
-    Value,
-    #[error("{}", .0)]
-    Generic(String),
-}
 
 #[derive(Debug, Default)]
 pub struct DsnArgs<S: Into<String> + Copy> {
@@ -60,7 +45,7 @@ pub struct Dsn {
 
 impl Dsn {
     #[allow(clippy::too_many_arguments)]
-    pub fn new<S: Into<String> + Copy>(args: DsnArgs<S>) -> Result<Self, DsnError> {
+    pub fn new<S: Into<String> + Copy>(args: DsnArgs<S>) -> Result<Self, SettingError> {
         let validation = [
             Dsn::check_value_length(&args.database.into()),
             unsafe { SQLValidDSNW(to_widechar_ptr(&args.dsn.into()).0) },
@@ -82,9 +67,9 @@ impl Dsn {
                 log_level: args.log_level.into(),
             })
         } else if !validation[1] {
-            Err(DsnError::Dsn(args.dsn.into()))
+            Err(SettingError::Dsn(args.dsn.into()))
         } else {
-            Err(DsnError::Value)
+            Err(SettingError::Value)
         }
     }
 
@@ -123,7 +108,7 @@ impl Dsn {
         })
     }
 
-    pub fn from_private_profile_string(&self) -> Result<Self, DsnError> {
+    pub fn from_private_profile_string(&self) -> Result<Self, SettingError> {
         let mut dsn_opts = Dsn::default();
 
         let mut error_key = "";
@@ -191,7 +176,7 @@ impl Dsn {
             });
         // Somehow the registry value was too long. This should never happen unless Microsoft changes registry value rules.
         if !error_key.is_empty() {
-            return Err(DsnError::Generic(format!("If you see this error, please report it. Attempted to read a value from registry that was too long for key: `{error_key}`.")));
+            return Err(SettingError::Generic(format!("If you see this error, please report it. Attempted to read a value from registry that was too long for key: `{error_key}`.")));
         }
         dsn_opts.driver_name = self.driver_name.clone();
         dsn_opts.dsn = self.dsn.clone();
@@ -228,14 +213,13 @@ impl Dsn {
     }
 
     pub fn to_connection_string(&self) -> String {
-        self.iter()
-            .map(|(key, value)| {
-                if value.is_empty() {
-                    return "".into();
-                }
-                format!("{key}={value};")
-            })
-            .collect::<String>()
+        self.iter().fold(String::new(), |mut output, (key, value)| {
+            if value.is_empty() {
+                return "".into();
+            }
+            let _ = write!(output, "{key}={value};");
+            output
+        })
     }
 }
 
