@@ -163,6 +163,16 @@ functions:
           ${prepare_shell}
           cargo fmt --all --  --check
 
+  "generate SBOM and scan":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: mongosql-odbc-driver
+        script: |
+          ${prepare_shell}
+          ./resources/ssdlc/generate_sbom.sh
+
   "set and check packages version":
     - command: shell.exec
       type: test
@@ -1407,6 +1417,11 @@ tasks:
       - func: "install rust toolchain"
       - func: "check rustfmt"
 
+  - name: sbom
+    commands:
+      - func: "install rust toolchain"
+      - func: "generate SBOM and scan"
+
   - name: compile
     commands:
       - func: "install iODBC"
@@ -1639,6 +1654,13 @@ buildvariants:
       - name: clippy
       - name: rustfmt
       - name: asan-compile
+
+buildvariants:
+  - name: code-quality-security
+    display_name: "Code quality and Security"
+    run_on: [ubuntu2204-small]
+    tasks:
+      - name: sbom
 
   - name: windows-64
     tags: ["release-variant"]
