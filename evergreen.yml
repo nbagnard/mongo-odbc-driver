@@ -171,7 +171,179 @@ functions:
         working_dir: mongosql-odbc-driver
         script: |
           ${prepare_shell}
-          ./resources/ssdlc/generate_sbom.sh
+          echo "Install SBOM tool..."
+
+          OS=$(uname)
+          echo "OS=$OS"
+          ARCH="$(uname -m)"
+          echo "Arch=$ARCH"
+
+          SBOM_DIR=sbom_generations
+          mkdir $SBOM_DIR
+
+          SBOM_LICENSES="mongo-odbc-driver.licenses.cdx.json"
+          SBOM_VULN="mongo-odbc-driver.merge.grype.cdx.json"
+          SBOM_FINAL="mongo-odbc-driver.full.cdx.json"
+
+          echo "SBOM with vulnerabilities: $SBOM_LICENSES";
+          echo "SBOM with license: $SBOM_VULN";
+          echo "Final SBOM with all information: $SBOM_FINAL"
+
+          # Install cargo-cyclonedx
+          echo "-- Installing cargo-cyclonedx --"
+          cargo install cargo-cyclonedx
+          echo "------------------------------------"
+
+          # Install Grype
+          echo "-- Downloading Grype --"
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b $SBOM_DIR
+          echo "------------------------------------"
+
+          # Install CycloneDX CLI and JQ
+          CYCLONE_URL=""
+          JQ_URL=""
+          if [[ "$OS" = "Linux" ]]; then
+            if [[ "$ARCH" = "x86_64" ]]; then
+              CYCLONE_URL="https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.25.0/cyclonedx-linux-x64"
+              JQ_URL="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
+            elif [ "$ARCH" = "arm64" ]; then
+              CYCLONE_URL="https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.25.0/cyclonedx-linux-arm64"
+              JQ_URL="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-arm64"
+            fi
+          elif [[ "$OS" = "Darwin" ]]; then
+            if [[ "$ARCH" = "arm64" ]]; then
+              CYCLONE_URL="https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.25.0/cyclonedx-osx-arm64"
+              JQ_URL="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-arm64"
+            else
+              CYCLONE_URL="https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.25.0/cyclonedx-osx-x64"
+              JQ_URL="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-amd64"
+            fi
+          else
+            # Windows
+            CYCLONE_URL="https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.25.0/cyclonedx-win-x64.exe"
+            JQ_URL="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe"
+          fi
+
+          echo "-- JQ $JQ_URL --"
+
+          echo "-- Downloading CycloneDX CLI $CYCLONE_URL --"
+          curl -L -o $SBOM_DIR/cyclonedx-cli "$CYCLONE_URL" \
+            --silent \
+            --fail \
+            --max-time 60 \
+            --retry 5 \
+            --retry-delay 0
+          chmod +x ./$SBOM_DIR/cyclonedx-cli
+          echo "------------------------------------"
+
+          echo "-- Downloading JQ $JQ_URL --"
+          curl -L -o $SBOM_DIR/jq "$JQ_URL" \
+            --silent \
+            --fail \
+            --max-time 60 \
+            --retry 5 \
+            --retry-delay 0
+          chmod +x ./$SBOM_DIR/jq
+          echo "------------------------------------"
+
+          ls -lrt ./$SBOM_DIR
+
+          echo "--  Generating SBOMs with the licenses information --"
+          cargo cyclonedx -v -f json  --manifest-path ./Cargo.toml
+          echo "------------------------------------"
+
+          ls -lrt ./odbc
+          ls -lrt ./win_setupgui
+
+          echo "-- Merging info from both mongo-odbc-driver and win_setupgui because both are packaged libraries --"
+          # TODO add --version from tag
+          echo "./$SBOM_DIR/cyclonedx-cli merge --input-files ./odbc/mongo-odbc-driver.cdx.json ./win_setupgui/win_setupgui.cdx.json --output-format json --input-format json --group mongo-odbc-driver --name mongo-odbc-driver> $SBOM_LICENSES"
+          ./$SBOM_DIR/cyclonedx-cli merge --input-files ./odbc/mongo-odbc-driver.cdx.json ./win_setupgui/win_setupgui.cdx.json --output-format json --input-format json --group mongo-odbc-driver --name mongo-odbc-driver> $SBOM_LICENSES
+          echo "------------------------------------"
+
+          ls -lrt
+
+          echo "-- Generating SBOM with vulnerabilities information --"
+          echo "./$SBOM_DIR/grype sbom:$SBOM_LICENSES --fail-on low -o cyclonedx-json > $SBOM_VULN"
+          set +e      
+          ./$SBOM_DIR/grype sbom:$SBOM_LICENSES --fail-on low -o cyclonedx-json > $SBOM_VULN
+          SCAN_RESULT=$?
+          if [[ $SCAN_RESULT -ne 0 ]]; then
+              # Print out the vulnerabilities found in an easy to read format for Evergreen logs
+              ./$SBOM_DIR/grype sbom:$SBOM_LICENSES --fail-on low > scan_result.tmp
+              cat scan_result.tmp
+          fi
+          set -e
+          echo "------------------------------------"
+
+          echo "-- Merging the SBOMs with the licenses information and the SBOM with the  vulnerabilities information in $SBOM_FINAL --"
+
+          temp_output="temp_output.json"
+
+          if [[ -f "$temp_output" ]] ; then
+              rm "$temp_output"
+          fi
+          touch $temp_output
+
+          while IFS= read -r line
+          do
+            if [[ "$line" == *"purl"* ]]; then
+            bash_purl=$(echo $line | cut -d '"' -f4)
+            command=$(echo "./$SBOM_DIR/jq '.components[] | select(.purl == \"$bash_purl\").licenses' $SBOM_LICENSES")
+            licenseInfo=$(eval " $command")
+              if [[ -z "${licenseInfo}" ]]; then
+                echo "\"licenses\" : []," >> $temp_output
+              else
+                echo "\"licenses\" : $licenseInfo," >> $temp_output
+              fi
+            fi
+            echo "$line" >> $temp_output
+
+          done < "$SBOM_VULN"
+
+          # Format the json file
+          echo "./$SBOM_DIR/jq . $temp_output > $SBOM_FINAL"
+          ./$SBOM_DIR/jq . $temp_output > $SBOM_FINAL
+          echo "------------------------------------"
+
+          #cat $SBOM_FINAL
+
+          # Exit with a failure if the scan found a vulnerability
+          exit $SCAN_RESULT
+
+  "static code analysis":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: mongosql-odbc-driver
+        script: |
+          ${prepare_shell}
+          echo "Running static code analysis with Semgrep..."
+
+          venv='venv'
+          # Setup or use the existing virtualenv for semgrep
+          if [[ -f "$venv/bin/activate" ]]; then
+              echo 'using existing virtualenv'
+              . "$venv"/bin/activate
+          else
+              echo 'Creating new virtualenv'  
+              python3 -m virtualenv "$venv"
+              echo 'Activating new virtualenv'
+              . "$venv"/bin/activate
+          fi
+
+          python3 -m pip install semgrep
+
+          # confirm
+          semgrep --version
+          set +e
+          semgrep --config p/rust --exclude "integration_test" --error --severity=ERROR --sarif > mongo-odbc-driver.sast.sarif
+          SCAN_RESULT=$?
+          set -e
+
+          # Exit with a failure if the scan found an issue
+          exit $SCAN_RESULT
 
   "set and check packages version":
     - command: shell.exec
@@ -1420,7 +1592,14 @@ tasks:
   - name: sbom
     commands:
       - func: "install rust toolchain"
+      - func: set and check packages version
       - func: "generate SBOM and scan"
+
+  - name: semgrep
+    commands:
+      - func: "install rust toolchain"
+      - func: set and check packages version
+      - func: "static code analysis"
 
   - name: compile
     commands:
@@ -1661,6 +1840,7 @@ buildvariants:
     run_on: [ubuntu2204-small]
     tasks:
       - name: sbom
+      - name: semgrep
 
   - name: windows-64
     tags: ["release-variant"]
