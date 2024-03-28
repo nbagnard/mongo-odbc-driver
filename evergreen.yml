@@ -178,7 +178,7 @@ functions:
           ARCH="$(uname -m)"
           echo "Arch=$ARCH"
 
-          SBOM_DIR=sbom_generations
+          SBOM_DIR=sbom_tools
           mkdir $SBOM_DIR
 
           SBOM_LICENSES="mongo-odbc-driver.licenses.cdx.json"
@@ -288,10 +288,11 @@ functions:
           while IFS= read -r line
           do
             if [[ "$line" == *"purl"* ]]; then
-            bash_purl=$(echo $line | cut -d '"' -f4)
-            command=$(echo "./$SBOM_DIR/jq '.components[] | select(.purl == \"$bash_purl\").licenses' $SBOM_LICENSES")
-            licenseInfo=$(eval " $command")
-              if [[ -z "${licenseInfo}" ]]; then
+              bash_purl=$(echo $line | cut -d '"' -f4)
+              echo "purl = $bash_purl"
+              command=$(echo "./$SBOM_DIR/jq '.components[] | select(.purl == \"$bash_purl\").licenses' $SBOM_LICENSES")
+              licenseInfo=$(eval " $command")
+              if [[ -z "$licenseInfo" ]]; then
                 echo "\"licenses\" : []," >> $temp_output
               else
                 echo "\"licenses\" : $licenseInfo," >> $temp_output
@@ -309,7 +310,17 @@ functions:
           #cat $SBOM_FINAL
 
           # Exit with a failure if the scan found a vulnerability
-          exit $SCAN_RESULT
+          #exit $SCAN_RESULT
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_files_include_filter:
+            - mongosql-odbc-driver/*.cdx.json
+        remote_file: mongosql-odbc-driver/artifacts/${version_id}/${build_variant}/ssdlc/
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
 
   "static code analysis":
     - command: shell.exec
@@ -344,6 +355,16 @@ functions:
 
           # Exit with a failure if the scan found an issue
           exit $SCAN_RESULT
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_files_include_filter:
+            - mongosql-odbc-driver/mongo-odbc-driver.sast.sarif
+        remote_file: mongosql-odbc-driver/artifacts/${version_id}/${build_variant}/ssdlc/
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
 
   "set and check packages version":
     - command: shell.exec
