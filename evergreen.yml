@@ -249,7 +249,7 @@ functions:
           ls -lrt ./$SBOM_DIR
 
           echo "--  Generating SBOMs with the licenses information --"
-          cargo cyclonedx -v -f json  --manifest-path ./Cargo.toml
+          cargo cyclonedx --target all -v -f json
           echo "------------------------------------"
 
           ls -lrt ./odbc
