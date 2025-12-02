@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "garbage_collect")]
 use std::sync::Weak;
 use std::{sync::Arc, time::Duration};
+use mongodb::error::ErrorKind;
 use tokio::runtime::Runtime;
 
 // we make from UserOptions to Client and Weak<Runtime> so that we do not hold around
@@ -123,8 +124,19 @@ impl MongoConnection {
             let guard = runtime.enter();
             // the Client Topology uses tokio::spawn, so we need a guard here.
             let client = runtime.block_on(async {
-                Client::with_options(user_options.client_options)
-                    .map_err(Error::InvalidClientOptions)
+                match Client::with_options(user_options.client_options) {
+                    Ok(c) => Ok(c),
+                    Err(e) => {
+                        // On windows, the default dns resolver sometimes fails with Cloudflare DNS.
+                        // We fall back to the default system resolver in this case.
+                        if matches!(e.kind.as_ref(), ErrorKind::DnsResolve { .. }) && user_options.fallback_client_options.is_some() {
+                            Client::with_options(user_options.fallback_client_options.unwrap())
+                                .map_err(Error::InvalidClientOptions)
+                        } else {
+                            Err(Error::InvalidClientOptions(e))
+                        }
+                    }
+                }
             })?;
             // we need to drop the guard before we return the runtime to kill the borrow
             // on the runtime. We drop it before the insert to hold the lock for as little time as
